@@ -1,6 +1,7 @@
 (function(context) {
     var http = require("http");
     var url = require("url");
+    var sys = require("sys");
     var fs = require("fs");
 
     var staticFileHandler = (function() {
