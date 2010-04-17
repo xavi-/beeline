@@ -41,7 +41,7 @@
         
     var server = http.createServer(function(req, res) {
         (urls[url.parse(req.url).pathname] || findPattern(req) || error)(req, res);
-    }).listen(8001);
+    });
     
     context.urls = urls;
     context.patterns = patterns;
