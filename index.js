@@ -9,8 +9,8 @@
             fs.readFile(path, function(err, data) {
                 if(err) { throw err; };
                 
-                res.sendHeader(200, { "Conent-Length": data.length,
-                                      "Content-Type": mime });
+                res.writeHead(200, { "Conent-Length": data.length,
+                                     "Content-Type": mime });
                 res.end(data, "utf8");
             });
         }
@@ -24,8 +24,8 @@
         patterns = [],
         error = function(req, res) { 
             var body = "404'd";
-            res.sendHeader(404, { "Content-Length": body.length,
-                                  "Content-Type": "text/plain" });
+            res.writeHead(404, { "Content-Length": body.length,
+                                 "Content-Type": "text/plain" });
             res.end(body);
             
             sys.puts("Someone 404'd: " + req.url);
