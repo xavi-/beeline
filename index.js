@@ -20,17 +20,18 @@
         };
     })();
     
-    var urls = {},
-        patterns = [],
-        error = function(req, res) { 
-            var body = "404'd";
-            res.writeHead(404, { "Content-Length": body.length,
-                                 "Content-Type": "text/plain" });
-            res.end(body);
-            
-            sys.puts("Someone 404'd: " + req.url);
-        };
-
+    var urls = {};
+    
+    function error(req, res) { 
+        var body = "404'd";
+        res.writeHead(404, { "Content-Length": body.length,
+                             "Content-Type": "text/plain" });
+        res.end(body);
+        
+        sys.puts("Someone 404'd: " + req.url);
+    }
+    
+    var patterns = [];
     function findPattern(req) {
         for(var i = 0, l = patterns.length; i < l; i++) {
             if(patterns[i].test(req)) { return patterns[i].handler; }
