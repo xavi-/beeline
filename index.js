@@ -41,7 +41,7 @@
     }    
         
     var server = http.createServer(function(req, res) {
-        (urls[url.parse(req.url).pathname] || findPattern(req) || error)(req, res);
+        (urls[url.parse(req.url).pathname] || findPattern(req) || context.error)(req, res);
     });
     
     context.urls = urls;
