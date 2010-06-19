@@ -5,18 +5,41 @@
     var fs = require("fs");
 
     var staticFileHandler = (function() {
-        function Handler(path, mime, req, res) {
-            fs.readFile(path, function(err, data) {
+        var buffer = (function() {
+            var buffers = {};
+            
+            function addBuffer(path) {
+                fs.watchFile(path, function() { buffers[path] = null; });
+            }
+        
+            function getBuffer(path, callback) {
+                if(buffers[path]) { sys.puts("hit cache"); callback(null, buffers[path]); }
+                else { sys.puts("miss cache");
+                    fs.readFile(path, function(err, data) {
+                        if(err) { callback(err); };
+                
+                        buffers[path] = data;
+                        callback(err, data);
+                    });
+                }
+            }
+        
+            return { add: addBuffer, get: getBuffer };
+        })();
+        
+        function Handler(path, mime, res) {
+            buffer.get(path, function(err, buffer) {
                 if(err) { throw err; };
                 
-                res.writeHead(200, { "Conent-Length": data.length,
+                res.writeHead(200, { "Conent-Length": buffer.length,
                                      "Content-Type": mime });
-                res.end(data, "utf8");
+                res.end(buffer);
             });
         }
 
         return function(path, mime) {
-            return function(req, res) { Handler(path, mime, req, res); }; 
+            buffer.add(path);
+            return function(req, res) { Handler(path, mime, res); }; 
         };
     })();
     
