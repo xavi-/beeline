@@ -13,8 +13,8 @@
             }
         
             function getBuffer(path, callback) {
-                if(buffers[path]) { sys.puts("hit cache"); callback(null, buffers[path]); }
-                else { sys.puts("miss cache");
+                if(buffers[path]) { callback(null, buffers[path]); }
+                else {
                     fs.readFile(path, function(err, data) {
                         if(err) { callback(err); };
                 
