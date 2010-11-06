@@ -1,7 +1,6 @@
 (function(context) {
     var http = require("http");
     var url = require("url");
-    var sys = require("sys");
     var fs = require("fs");
     
     var buffer = (function() {
@@ -75,7 +74,7 @@
                              "Content-Type": "text/plain" });
         res.end(body);
         
-        sys.puts("Someone 404'd: " + req.url);
+        console.log("Someone 404'd: " + req.url);
     }
     
     var patterns = [];
