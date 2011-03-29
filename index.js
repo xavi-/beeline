@@ -1,5 +1,4 @@
-(function(context) {
-    var http = require("http");
+(function(context, undefined) {
     var url = require("url");
     var fs = require("fs");
     
@@ -66,9 +65,7 @@
         };
     }
     
-    var urls = {};
-    
-    function error(req, res) { 
+    function default404(req, res) {
         var body = "404'd";
         res.writeHead(404, { "Content-Length": body.length,
                              "Content-Type": "text/plain" });
@@ -77,23 +74,74 @@
         console.log("Someone 404'd: " + req.url);
     }
     
-    var patterns = [];
-    function findPattern(req) {
+    function default503(req, res, err) {
+        var body = [ "503'd" ];
+        body.push("An exception was thrown while accessing: " + req.method + " " + req.url);
+        body.push("Exception: " + err.message);
+        body.push(err.stack);
+        body = body.join("\n");
+        res.writeHead(503, { "Content-Length": body.length,
+                             "Content-Type": "text/plain" });
+        res.end(body);
+    }
+    
+    function findPattern(patterns, path) {
         for(var i = 0, l = patterns.length; i < l; i++) {
-            if(patterns[i].test(req)) { return patterns[i].handler; }
+            if(patterns[i].regx.test(path)) {
+                return { handler: patterns[i].handler, extra: patterns[i].regx.exec(path).slice(1) }; 
+            }
         }
         
         return null;
     }
     
-    var server = http.createServer(function(req, res) {
-        (urls[url.parse(req.url).pathname] || findPattern(req) || context.error)(req, res);
-    });
+    function findGeneric(generics, req) {
+        for(var i = 0, l = generics.length; i < l; i++) {
+            if(generics[i].test(req)) { return generics[i].handler; }
+        }
+        
+        return null;
+    }
     
-    context.urls = urls;
-    context.patterns = patterns;
-    context.error = error;
-    context.server = server;
+    var rPattern = /(?:^r`)|(?:`$)/g;
+    var rGeneric = /(?:^`)|(?:`$)/g;
+    context.line = function(routes) {
+        var urls = {}, patterns = [], generics = [], missing = default404, error = default503;
+        
+        function handler(req, res) {
+            try {
+                var path = url.parse(req.url).pathname;
+                var info = (urls[path] || findPattern(patterns, path) || findGeneric(generics, req) || missing);
+                var handler = info.handler || info;
+                var extra = info.extra;
+                
+                (handler[req.method] || handler.any || handler).apply(this, req, res, extra);
+            } catch(err) {
+                console.error("Error accessing: " + req.method + " " + req.url);
+                console.error(err.message);
+                console.error(err.stack);
+                error.call(this, req, res, err);
+            }
+        }
+        handler.add = function(routes) {
+            for(var route in routes) {
+                if(route.indexOf("`") === -1) {
+                    urls[route] = routes[route];
+                } else if(route === "`404`" || route === "`missing`" || route === "`default`") {
+                    missing = routes[route];
+                } else if(route === "`503`" || route === "`error`") {
+                    error = routes[route];
+                } else if(rPattern.test(route)) {
+                    patterns.push({ regx: new RegExp(route.replace(rPattern, "")), handler: routes[route] });
+                } else if(rGeneric.test(route)) {
+                    Array.prototype.push.apply(generic, routes[route]);
+                }
+            }
+        };
+        handler.add(routes);
+        
+        return handler;
+    };
     context.staticFileHandler = staticFileHandler;
     context.staticDirHandler = staticDirHandler;
 })(exports);
