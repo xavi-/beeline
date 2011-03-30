@@ -32,3 +32,14 @@ line.add({
 });
 line({ url: "/" }, {});
 line({ url: "/index" }, {});
+
+line.add({ 
+    "/method-test": {
+        "GET": function(req, res) { assert.equal(req.method, "GET"); },
+        "POST": function(req, res) { assert.equal(req.method, "POST"); },
+        "any": function(req, res) { assert.ok(req.method !== "GET" || req.method !== "POST"); }
+    }
+});
+line({ url: "/method-test", method: "GET" }, {});
+line({ url: "/method-test", method: "POST" }, {});
+line({ url: "/method-test", method: "HEAD" }, {});
