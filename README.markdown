@@ -7,6 +7,7 @@ Currently works with node.js v0.3.1 and above
 ## Goals
 * Simple
 * Unobtrusive
+* Fairly Foolproof
 * Easy to debug
 * Fast
 
