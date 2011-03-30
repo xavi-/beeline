@@ -21,9 +21,14 @@ var line = bee.line({
         assert.equal(err.message, "503 should catch");
     }
 });
-
 line({ url: "/test?param=1&woo=2" }, {});
 line({ url: "/throw-error" }, {});
 line({ url: "/name/woo" }, {});
 line({ url: "/random", triggerGeneric: true }, {});
 line({ url: "/url-not-found" }, {});
+
+line.add({ 
+    "/ /index": function(req, res) { assert.ok(req.url === "/" || req.url === "/index"); }
+});
+line({ url: "/" }, {});
+line({ url: "/index" }, {});

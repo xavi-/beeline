@@ -124,18 +124,20 @@
             }
         }
         handler.add = function(routes) {
-            for(var route in routes) {
-                if(route.indexOf("`") === -1) {
-                    urls[route] = routes[route];
-                } else if(route === "`404`" || route === "`missing`" || route === "`default`") {
-                    missing = routes[route];
-                } else if(route === "`503`" || route === "`error`") {
-                    error = routes[route];
-                } else if(rPattern.test(route)) {
-                    patterns.push({ regx: new RegExp(rPattern.exec(route)[1]), handler: routes[route] });
-                } else if(route === "`generics`") {
-                    Array.prototype.push.apply(generics, routes[route]);
-                }
+            for(var key in routes) {
+                key.split(/\s+/).forEach(function(route) {
+                    if(route.indexOf("`") === -1) {
+                        urls[route] = routes[key];
+                    } else if(route === "`404`" || route === "`missing`" || route === "`default`") {
+                        missing = routes[key];
+                    } else if(route === "`503`" || route === "`error`") {
+                        error = routes[key];
+                    } else if(rPattern.test(route)) {
+                        patterns.push({ regx: new RegExp(rPattern.exec(route)[1]), handler: routes[key] });
+                    } else if(route === "`generics`") {
+                        Array.prototype.push.apply(generics, routes[key]);
+                    }
+                });
             }
         };
         handler.add(routes);
