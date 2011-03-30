@@ -83,6 +83,10 @@
         res.writeHead(503, { "Content-Length": body.length,
                              "Content-Type": "text/plain" });
         res.end(body);
+        
+        console.error("Error accessing: " + req.method + " " + req.url);
+        console.error(err.message);
+        console.error(err.stack);
     }
     
     function findPattern(patterns, path) {
@@ -103,8 +107,7 @@
         return null;
     }
     
-    var rPattern = /(?:^r`)|(?:`$)/g;
-    var rGeneric = /(?:^`)|(?:`$)/g;
+    var rPattern = /^r`(.*)`$/;
     context.line = function(routes) {
         var urls = {}, patterns = [], generics = [], missing = default404, error = default503;
         
@@ -115,11 +118,8 @@
                 var handler = info.handler || info;
                 var extra = info.extra;
                 
-                (handler[req.method] || handler.any || handler).apply(this, req, res, extra);
+                (handler[req.method] || handler.any || handler).call(this, req, res, extra);
             } catch(err) {
-                console.error("Error accessing: " + req.method + " " + req.url);
-                console.error(err.message);
-                console.error(err.stack);
                 error.call(this, req, res, err);
             }
         }
@@ -132,9 +132,9 @@
                 } else if(route === "`503`" || route === "`error`") {
                     error = routes[route];
                 } else if(rPattern.test(route)) {
-                    patterns.push({ regx: new RegExp(route.replace(rPattern, "")), handler: routes[route] });
-                } else if(rGeneric.test(route)) {
-                    Array.prototype.push.apply(generic, routes[route]);
+                    patterns.push({ regx: new RegExp(rPattern.exec(route)[1]), handler: routes[route] });
+                } else if(route === "`generics`") {
+                    Array.prototype.push.apply(generics, routes[route]);
                 }
             }
         };
