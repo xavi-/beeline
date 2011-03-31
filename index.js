@@ -1,8 +1,9 @@
 (function(context, undefined) {
     var url = require("url");
     var fs = require("fs");
+    var path = require("path");
     
-    var buffer = (function() {
+    var getBuffer = (function() {
         var buffers = {};
         
         function addBuffer(path) {
@@ -12,23 +13,31 @@
             fs.watchFile(path, function() { buffers[path] = null; });
         }
         
-        function getBuffer(path, callback) {
-            if(buffers[path]) { callback(null, buffers[path]); return; }
+        return function getBuffer(filePath, callback) {
+            if(buffers[filePath]) { return callback(null, buffers[filePath]); }
             
-            fs.readFile(path, function(err, data) {
-                if(err) { callback(err); };
+            path.exists(filePath, function(exists) {
+                if(!exists) { return callback("file-not-found", null); }
                 
-                buffers[path] = data;
-                callback(err, data);
+                fs.readFile(filePath, function(err, data) {
+                    if(err) { callback(err); };
+
+                    addBuffer(filePath);
+                    buffers[filePath] = data;
+                    callback(err, data);
+                });
             });
-        }
-        
-        return { add: addBuffer, get: getBuffer };
+        };
     })();
     
     var staticFileHandler = (function() {
-        function handler(path, mimeType, res) {
-            buffer.get(path, function(err, buffer) {
+        function handler(path, mimeType, req, res) {
+            getBuffer(path, function(err, buffer) {
+                if(err === "file-not-found") {
+                    console.error("Could find file: " + path);
+                    return default404(req, res);
+                }
+                
                 if(err) { throw err; };
                 
                 res.writeHead(200, { "Conent-Length": buffer.length,
@@ -38,30 +47,32 @@
         }
         
         return function staticFileHandler(path, mime) {
-            buffer.add(path);
-            return function(req, res) { handler(path, mime, res); }; 
+            return function(req, res) { handler(path, mime, req, res); }; 
         };
     })();
     
-    function staticDirHandler(urlPath, fileDir, extension, mimeType) {
-        var regUrl = new RegExp(urlPath + "([/a-zA-Z0-9_-]+)\." + extension);
-        
-        return {
-            test: function(req) { return regUrl.test(url.parse(req.url).pathname); },
-            handler: function(req, res) {
-                var uri = url.parse(req.url);
-                var urlName = regUrl.exec(uri.pathname)[1];
-                
-                buffer.add(fileDir + urlName + "." + extension);
-                
-                buffer.get(fileDir + urlName + "." + extension, function(err, buffer) {
-                    if(err) { throw err; }
-                    
-                    res.writeHead(200, { "Content-Length": buffer.length,
-                                         "Content-Type": mimeType });
-                    res.end(buffer, "binary");
-                });
+    function staticDirHandler(fileDir, mimeLookup) {
+        return function(req, res, match) {
+            var filePath = path.join.apply(path, [ fileDir ].concat(match));
+            var ext = path.extname(filePath);
+            
+            if(!(ext in mimeLookup || ext.substr(1) in mimeLookup)) {
+                console.error("Could find file: " + filePath);
+                return default404(req, res);
             }
+            
+            getBuffer(filePath, function(err, buffer) {
+                if(err === "file-not-found") {
+                    console.error("Could find file: " + filePath);
+                    return default404(req, res);
+                }
+                
+                if(err) { throw err; }
+                
+                res.writeHead(200, { "Content-Length": buffer.length,
+                                     "Content-Type": mimeLookup[ext] });
+                res.end(buffer, "binary");
+            });
         };
     }
     
