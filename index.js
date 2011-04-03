@@ -119,7 +119,7 @@
     }
     
     var rPattern = /^r`(.*)`$/;
-    context.line = function(routes) {
+    function route(routes) {
         var urls = {}, patterns = [], generics = [], missing = default404, error = default503;
         
         function handler(req, res) {
@@ -155,6 +155,7 @@
         
         return handler;
     };
+    context.route = route;
     context.staticFileHandler = staticFileHandler;
     context.staticDirHandler = staticDirHandler;
 })(exports);
