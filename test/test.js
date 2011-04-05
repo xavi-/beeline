@@ -9,9 +9,10 @@ var mockResponse = {
 var router = bee.route({
     "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); res.end(); },
     "/throw-error": function(req, res) { throw Error("503 should catch"); },
-    "r`^/name/([\\w-]+)$`": function(req, res, matches) {
-        assert.equal(req.url, "/name/woo");
-        assert.equal(matches[0], "woo");
+    "r`^/name/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
+        assert.equal(req.url, "/name/smith/will");
+        assert.equal(matches[0], "smith");
+        assert.equal(matches[1], "will");
         res.end();
     },
     "`generics`": [ {
@@ -24,14 +25,20 @@ var router = bee.route({
         res.end();
     },
     "`503`": function(req, res, err) {
-        assert.equal(req.url, "/throw-error");
+        try { assert.equal(req.url, "/throw-error"); }
+        catch(e) {
+            console.error(e.stack);
+            console.error("Caused by:");
+            console.error(err.stack);
+            process.exit();
+        }
         assert.equal(err.message, "503 should catch");
         res.end();
     }
 });
 router({ url: "/test?param=1&woo=2" }, mockResponse);
 router({ url: "/throw-error" }, mockResponse);
-router({ url: "/name/woo" }, mockResponse);
+router({ url: "/name/smith/will" }, mockResponse);
 router({ url: "/random", triggerGeneric: true }, mockResponse);
 router({ url: "/url-not-found" }, mockResponse);
 
@@ -52,4 +59,4 @@ router({ url: "/method-test", method: "GET" }, mockResponse);
 router({ url: "/method-test", method: "POST" }, mockResponse);
 router({ url: "/method-test", method: "HEAD" }, mockResponse);
 
-assert.ok(mockResponse.testCount === 0);
+assert.equal(mockResponse.testCount, 0);
