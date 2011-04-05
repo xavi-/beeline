@@ -136,16 +136,16 @@
         }
         handler.add = function(routes) {
             for(var key in routes) {
-                key.split(/\s+/).forEach(function(route) {
-                    if(route.indexOf("`") === -1) {
-                        urls[route] = routes[key];
-                    } else if(route === "`404`" || route === "`missing`" || route === "`default`") {
+                key.split(/\s+/).forEach(function(rule) {
+                    if(rule.indexOf("`") === -1) {
+                        urls[rule] = routes[key];
+                    } else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
                         missing = routes[key];
-                    } else if(route === "`503`" || route === "`error`") {
+                    } else if(rule === "`503`" || rule === "`error`") {
                         error = routes[key];
-                    } else if(rPattern.test(route)) {
-                        patterns.push({ regx: new RegExp(rPattern.exec(route)[1]), handler: routes[key] });
-                    } else if(route === "`generics`") {
+                    } else if(rPattern.test(rule)) {
+                        patterns.push({ regx: new RegExp(rPattern.exec(rule)[1]), handler: routes[key] });
+                    } else if(rule === "`generics`") {
                         Array.prototype.push.apply(generics, routes[key]);
                     }
                 });
