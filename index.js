@@ -21,7 +21,7 @@
                 
                 fs.readFile(filePath, function(err, data) {
                     if(err) { callback(err); };
-
+                    
                     addBuffer(filePath);
                     buffers[filePath] = data;
                     callback(err, data);
@@ -54,7 +54,7 @@
     function staticDirHandler(fileDir, mimeLookup) {
         return function(req, res, match) {
             var filePath = path.join.apply(path, [ fileDir ].concat(match));
-            var ext = path.extname(filePath);
+            var ext = path.extname(filePath).toLowerCase();
             
             if(!(ext in mimeLookup || ext.substr(1) in mimeLookup)) {
                 console.error("Could find file: " + filePath);
