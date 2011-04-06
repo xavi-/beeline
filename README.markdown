@@ -95,7 +95,11 @@ If the exact same rule is defined twice, then it's unspecified which request han
 
 ## Getting Beeline
 
-Clone this git repository:
+The easiest way to get beeline is with [npm](http://npmjs.org/):
+
+    npm install beeline
+
+Alternatively you can clone this git repository:
 
     git clone git://github.com/Xavi-/beeline.git
 
