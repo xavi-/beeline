@@ -1,30 +1,31 @@
 var assert = require("assert");
 var bee = require("../");
 
-var mockResponse = {
-    testCount: 17,
-    end: function() { this.testCount--; }
+var tests = {
+    expected: 17,
+    executed: 0,
+    finished: function() { tests.executed++; }
 }
 var warnings = {};
-console.warn = function(msg) { warnings[msg] = true; mockResponse.end(); };
+console.warn = function(msg) { warnings[msg] = true; tests.finished(); };
 
 var router = bee.route({
-    "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); res.end(); },
+    "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); tests.finished(); },
     "/throw-error": function(req, res) { throw Error("503 should catch"); },
     "r`^/name/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
         assert.equal(req.url, "/name/smith/will");
         assert.equal(matches[0], "smith");
         assert.equal(matches[1], "will");
-        res.end();
+        tests.finished();
     },
     "`generics`": [ {
             test: function(req) { return req.triggerGeneric; },
-            handler: function(req, res) { assert.ok(req.triggerGeneric); res.end(); }
+            handler: function(req, res) { assert.ok(req.triggerGeneric); tests.finished(); }
         }
     ],
     "`404`": function(req, res) {
         assert.equal(req.url, "/url-not-found");
-        res.end();
+        tests.finished();
     },
     "`503`": function(req, res, err) {
         try { assert.equal(req.url, "/throw-error"); }
@@ -35,36 +36,36 @@ var router = bee.route({
             process.exit();
         }
         assert.equal(err.message, "503 should catch");
-        res.end();
+        tests.finished();
     }
 });
-router({ url: "/test?param=1&woo=2" }, mockResponse);
-router({ url: "/throw-error" }, mockResponse);
-router({ url: "/name/smith/will" }, mockResponse);
-router({ url: "/random", triggerGeneric: true }, mockResponse);
-router({ url: "/url-not-found" }, mockResponse);
+router({ url: "/test?param=1&woo=2" });
+router({ url: "/throw-error" });
+router({ url: "/name/smith/will" });
+router({ url: "/random", triggerGeneric: true });
+router({ url: "/url-not-found" });
 
 router.add({ 
     "/ /home r`^/index(.php|.html|.xhtml)?$`": function(req, res) {
         assert.ok(req.url === "/" || req.url === "/index" || req.url === "/index.php" || req.url === "/home");
-        res.end();
+        tests.finished();
     }
 });
-router({ url: "/" }, mockResponse);
-router({ url: "/index" }, mockResponse);
-router({ url: "/index.php" }, mockResponse);
-router({ url: "/home" }, mockResponse);
+router({ url: "/" });
+router({ url: "/index" });
+router({ url: "/index.php" });
+router({ url: "/home" });
 
 router.add({ 
     "/method-test": {
-        "GET": function(req, res) { assert.equal(req.method, "GET"); res.end(); },
-        "POST": function(req, res) { assert.equal(req.method, "POST"); res.end(); },
-        "any": function(req, res) { assert.ok(req.method !== "GET" || req.method !== "POST"); res.end(); }
+        "GET": function(req, res) { assert.equal(req.method, "GET"); tests.finished(); },
+        "POST": function(req, res) { assert.equal(req.method, "POST"); tests.finished(); },
+        "any": function(req, res) { assert.ok(req.method !== "GET" || req.method !== "POST"); tests.finished(); }
     }
 });
-router({ url: "/method-test", method: "GET" }, mockResponse);
-router({ url: "/method-test", method: "POST" }, mockResponse);
-router({ url: "/method-test", method: "HEAD" }, mockResponse);
+router({ url: "/method-test", method: "GET" });
+router({ url: "/method-test", method: "POST" });
+router({ url: "/method-test", method: "HEAD" });
 
 
 // Testing warning messages
@@ -82,4 +83,4 @@ assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `503`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
-assert.equal(mockResponse.testCount, 0);
+assert.equal(tests.executed, tests.expected);
