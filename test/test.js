@@ -2,7 +2,7 @@ var assert = require("assert");
 var bee = require("../");
 
 var mockResponse = {
-    testCount: 10,
+    testCount: 12,
     end: function() { this.testCount--; }
 }
 
@@ -43,10 +43,15 @@ router({ url: "/random", triggerGeneric: true }, mockResponse);
 router({ url: "/url-not-found" }, mockResponse);
 
 router.add({ 
-    "/ /index": function(req, res) { assert.ok(req.url === "/" || req.url === "/index"); res.end(); }
+    "/ /home r`^/index(.php|.html|.xhtml)?$`": function(req, res) {
+        assert.ok(req.url === "/" || req.url === "/index" || req.url === "/index.php" || req.url === "/home");
+        res.end();
+    }
 });
 router({ url: "/" }, mockResponse);
 router({ url: "/index" }, mockResponse);
+router({ url: "/index.php" }, mockResponse);
+router({ url: "/home" }, mockResponse);
 
 router.add({ 
     "/method-test": {
