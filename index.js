@@ -138,15 +138,24 @@
             for(var key in routes) {
                 key.split(/\s+/).forEach(function(rule) {
                     if(rule.indexOf("`") === -1) {
+                        if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
                         urls[rule] = routes[key];
                     } else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
+                        if(missing !== default404) { console.warn("Duplicate beeline rule: " + rule); }
                         missing = routes[key];
                     } else if(rule === "`503`" || rule === "`error`") {
+                        if(error !== default503) { console.warn("Duplicate beeline rule: " + rule); }
                         error = routes[key];
                     } else if(rPattern.test(rule)) {
-                        patterns.push({ regx: new RegExp(rPattern.exec(rule)[1]), handler: routes[key] });
+                        var rRule = new RegExp(rPattern.exec(rule)[1]);
+                        if(patterns.some(function(p) { return p.regx.toString() === rRule.toString(); })) {
+                            console.warn("Duplicate beeline rule: " + rule);
+                        }
+                        patterns.push({ regx: rRule, handler: routes[key] });
                     } else if(rule === "`generics`") {
                         Array.prototype.push.apply(generics, routes[key]);
+                    } else {
+                        console.warn("Invalid beeline rule: " + rule);
                     }
                 });
             }

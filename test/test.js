@@ -2,9 +2,11 @@ var assert = require("assert");
 var bee = require("../");
 
 var mockResponse = {
-    testCount: 12,
+    testCount: 17,
     end: function() { this.testCount--; }
 }
+var warnings = {};
+console.warn = function(msg) { warnings[msg] = true; mockResponse.end(); };
 
 var router = bee.route({
     "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); res.end(); },
@@ -63,5 +65,21 @@ router.add({
 router({ url: "/method-test", method: "GET" }, mockResponse);
 router({ url: "/method-test", method: "POST" }, mockResponse);
 router({ url: "/method-test", method: "HEAD" }, mockResponse);
+
+
+// Testing warning messages
+router.add({
+    "/home": function() { },
+    "r`^/name/([\\w]+)/([\\w]+)$`": function() { },
+    "`404`": function() { },
+    "`503`": function() { },
+    "`not-a-valid-rule": function() { }
+});
+
+assert.ok(warnings["Duplicate beeline rule: /home"]);
+assert.ok(warnings["Duplicate beeline rule: r`^/name/([\\w]+)/([\\w]+)$`"]);
+assert.ok(warnings["Duplicate beeline rule: `404`"]);
+assert.ok(warnings["Duplicate beeline rule: `503`"]);
+assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
 assert.equal(mockResponse.testCount, 0);
