@@ -40,7 +40,7 @@
                 
                 if(err) { throw err; };
                 
-                res.writeHead(200, { "Conent-Length": buffer.length,
+                res.writeHead(200, { "Content-Length": buffer.length,
                                      "Content-Type": mimeType });
                 res.end(buffer, "binary");
             });
@@ -56,7 +56,7 @@
             var filePath = path.join.apply(path, [ fileDir ].concat(match));
             var ext = path.extname(filePath).toLowerCase();
             
-            if(!(ext in mimeLookup || ext.substr(1) in mimeLookup)) {
+            if(!(ext in mimeLookup)) {
                 console.error("Could find file: " + filePath);
                 return default404(req, res);
             }

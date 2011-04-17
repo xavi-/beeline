@@ -1,8 +1,9 @@
 var assert = require("assert");
+var fs = require("fs");
 var bee = require("../");
 
 var tests = {
-    expected: 17,
+    expected: 25,
     executed: 0,
     finished: function() { tests.executed++; }
 }
@@ -83,4 +84,70 @@ assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `503`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
-assert.equal(tests.executed, tests.expected);
+var staticFile = bee.staticFileHandler("../index.js", "application/x-javascript");
+fs.readFile("../index.js", function(err, data) {
+    if(err) { throw err; }
+    
+    staticFile({ url: "/test" }, { // Mock response
+       writeHead: function(status, headers) {
+            assert.equal(status, 200);
+            assert.equal(headers["Content-Type"], "application/x-javascript");
+            assert.equal(headers["Content-Length"], data.length);
+            tests.finished();
+        },
+        end: function(body) {
+            assert.deepEqual(body, data);
+            fs.unwatchFile("../index.js");
+            tests.finished();
+        }
+    });
+});
+
+var static404 = bee.staticFileHandler("../does-not-exists", "not/real");
+static404({ url: "/test" }, { // Mock response
+    writeHead: function(status, headers) {
+        assert.equal(status, 404);
+        assert.notEqual(headers["Content-Type"], "not/real");
+        tests.finished();
+    },
+    end: function(body) {
+        assert.ok(body);
+        tests.finished();
+    }
+});
+
+var staticDir = bee.staticDirHandler("../", { ".json": "application/json" });
+fs.readFile("../package.json", function(err, data) {
+    if(err) { throw err; }
+    
+    staticDir({ url: "/test" }, { // Mock response
+       writeHead: function(status, headers) {
+            assert.equal(status, 200);
+            assert.equal(headers["Content-Type"], "application/json");
+            assert.equal(headers["Content-Length"], data.length);
+            tests.finished();
+        },
+        end: function(body) {
+            assert.deepEqual(body, data);
+            fs.unwatchFile("../package.json");
+            tests.finished();
+        }
+    }, [ "package.json" ]);
+});
+staticDir({ url: "/test" }, { // Mock response
+    writeHead: function(status, headers) {
+        assert.equal(status, 404);
+        assert.ok(headers["Content-Type"]);
+        tests.finished();
+    },
+    end: function(body) {
+        assert.ok(body);
+        tests.finished();
+    }
+}, [ "README.markdown" ]);
+
+
+process.on("exit", function() {
+    assert.equal(tests.executed, tests.expected);
+    console.log("\n\nAll done everything passed");
+});

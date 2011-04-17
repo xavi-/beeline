@@ -78,8 +78,8 @@ The `beeline` library contains the following three methods:
             // /pics/woo-fee.tiff serves a 404 since there's no corresponding mimeType specified.
             // This helps prevent accidental exposure.
             "r`^/pics/(.*)$`":
-                bee.staticDirHandler("./content/pics/", { "gif": "image/gif", "png": "image/png",
-                                                          "jpg": "image/jpeg", "jpeg": "image/jpeg" })
+                bee.staticDirHandler("./content/pics/", { ".gif": "image/gif", ".png": "image/png",
+                                                          ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
         });
 
 ### Precedence Rules
