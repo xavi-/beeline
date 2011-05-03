@@ -65,12 +65,12 @@ To start, simply store the `beeline` library in a local variable:
 The `beeline` library contains the following three methods:
 
 - `bee.route(routes)`: Used to create a new router.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) objects as parameters.  The `routes` parameter is an objects that maps rules to handlers.  See examples section for more details.
-- `bee.staticFileHandler(path, mimeType)`: This is a utility method that is used to quickly expose static files.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) objects as parameters.  When `rtn_fn` is called, the file contents located at `path` are served (via the ServerResponse) with the `Content-Type` set to the `mimeType` parameter.  Note if the file at `path` does not exist a `404` is served.  Here's an example of how you might use `bee.staticFileHandler`:
+- `bee.staticFile(path, mimeType)`: This is a utility method that is used to quickly expose static files.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) objects as parameters.  When `rtn_fn` is called, the file contents located at `path` are served (via the ServerResponse) with the `Content-Type` set to the `mimeType` parameter.  Note if the file at `path` does not exist a `404` is served.  Here's an example of how you might use `bee.staticFile`:
 
         bee.route({
-            "/robots.txt": bee.staticFileHandler("./content/robots.txt", "text/plain")
+            "/robots.txt": bee.staticFile("./content/robots.txt", "text/plain")
         });
-- `bee.staticDirHandler(path, mimeTypes)`: This is utility method is used to expose directories of files.  It returns a function called `rtn_fn` that takes a [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) object, a [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) object, and an array of strings called `matches` as parameters.  Whenever `rtn_fn` is called, the items of `matches` are joined together and then concatenated to `path`.  The resulting string is assumed to be a path to a specific file.  If this file exists, its contents are served (via the ServerResponse) with the `Content-Type` set to the value that corresponds to the file's extension in the `mimeTypes` object.  If the resulting string doesn't point to an existing file or if the file's extension is not found in `mimeTypes`, then a `404` is served.  Also, file extensions require a leading period (`.`) and are assumed to be lowercase.  Here's an example of how you might use `bee.staticDirHandler`:
+- `bee.staticDir(path, mimeTypes)`: This is utility method is used to expose directories of files.  It returns a function called `rtn_fn` that takes a [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) object, a [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) object, and an array of strings called `matches` as parameters.  Whenever `rtn_fn` is called, the items of `matches` are joined together and then concatenated to `path`.  The resulting string is assumed to be a path to a specific file.  If this file exists, its contents are served (via the ServerResponse) with the `Content-Type` set to the value that corresponds to the file's extension in the `mimeTypes` object.  If the resulting string doesn't point to an existing file or if the file's extension is not found in `mimeTypes`, then a `404` is served.  Also, file extensions require a leading period (`.`) and are assumed to be lowercase.  Here's an example of how you might use `bee.staticDir`:
 
         bee.route({
             // /pics/mofo.png serves ./content/pics/mofo.png
@@ -78,8 +78,8 @@ The `beeline` library contains the following three methods:
             // /pics/woo-fee.tiff serves a 404 since there's no corresponding mimeType specified.
             // This helps prevent accidental exposure.
             "r`^/pics/(.*)$`":
-                bee.staticDirHandler("./content/pics/", { ".gif": "image/gif", ".png": "image/png",
-                                                          ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
+                bee.staticDir("./content/pics/", { ".gif": "image/gif", ".png": "image/png",
+                                                   ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
         });
 
 ### Precedence Rules

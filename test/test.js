@@ -84,7 +84,7 @@ assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `503`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
-var staticFile = bee.staticFileHandler("../index.js", "application/x-javascript");
+var staticFile = bee.staticFile("../index.js", "application/x-javascript");
 fs.readFile("../index.js", function(err, data) {
     if(err) { throw err; }
     
@@ -103,7 +103,7 @@ fs.readFile("../index.js", function(err, data) {
     });
 });
 
-var static404 = bee.staticFileHandler("../does-not-exists", "not/real");
+var static404 = bee.staticFile("../does-not-exists", "not/real");
 static404({ url: "/test" }, { // Mock response
     writeHead: function(status, headers) {
         assert.equal(status, 404);
@@ -116,7 +116,7 @@ static404({ url: "/test" }, { // Mock response
     }
 });
 
-var staticDir = bee.staticDirHandler("../", { ".json": "application/json" });
+var staticDir = bee.staticDir("../", { ".json": "application/json" });
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
     

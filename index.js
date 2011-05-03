@@ -30,7 +30,7 @@
         };
     })();
     
-    var staticFileHandler = (function() {
+    var staticFile = (function() {
         function handler(path, mimeType, req, res) {
             getBuffer(path, function(err, buffer) {
                 if(err === "file-not-found") {
@@ -46,12 +46,12 @@
             });
         }
         
-        return function staticFileHandler(path, mime) {
+        return function staticFile(path, mime) {
             return function(req, res) { handler(path, mime, req, res); }; 
         };
     })();
     
-    function staticDirHandler(fileDir, mimeLookup) {
+    function staticDir(fileDir, mimeLookup) {
         return function(req, res, match) {
             var filePath = path.join.apply(path, [ fileDir ].concat(match));
             var ext = path.extname(filePath).toLowerCase();
@@ -165,6 +165,6 @@
         return handler;
     };
     context.route = route;
-    context.staticFileHandler = staticFileHandler;
-    context.staticDirHandler = staticDirHandler;
+    context.staticFile = staticFile;
+    context.staticDir = staticDir;
 })(exports);
