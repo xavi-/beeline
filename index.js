@@ -52,6 +52,12 @@
     })();
     
     function staticDir(fileDir, mimeLookup) {
+        for(var key in mimeLookup) {
+            if(key.charAt(0) !== ".") {
+                console.warn("Extension found without a leading periond ('.'): '" + key + "'");
+            }
+        }
+        
         return function(req, res, match) {
             var filePath = path.join.apply(path, [ fileDir ].concat(match));
             var ext = path.extname(filePath).toLowerCase();

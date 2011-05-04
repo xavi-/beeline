@@ -3,7 +3,7 @@ var fs = require("fs");
 var bee = require("../");
 
 var tests = {
-    expected: 25,
+    expected: 26,
     executed: 0,
     finished: function() { tests.executed++; }
 }
@@ -116,7 +116,8 @@ static404({ url: "/test" }, { // Mock response
     }
 });
 
-var staticDir = bee.staticDir("../", { ".json": "application/json" });
+var staticDir = bee.staticDir("../", { ".json": "application/json", "js": "application/x-javascript" });
+assert.ok(warnings["Extension found without a leading periond ('.'): 'js'"]);
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
     
