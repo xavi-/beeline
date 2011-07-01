@@ -3,7 +3,7 @@ var fs = require("fs");
 var bee = require("../");
 
 var tests = {
-    expected: 26,
+    expected: 27,
     executed: 0,
     finished: function() { tests.executed++; }
 }
@@ -68,6 +68,16 @@ router({ url: "/method-test", method: "GET" });
 router({ url: "/method-test", method: "POST" });
 router({ url: "/method-test", method: "HEAD" });
 
+// Testing preprocessors
+router.add({
+    "`preprocess`": function(req, res) { req.foo = "bar"; res.bar = "baz"; },
+    "/test-preprocess": function(req, res) {
+        assert.equal(req.foo, "bar");
+        assert.equal(res.bar, "baz");
+        tests.finished();
+    }
+});
+router({ url: "/test-preprocess" }, {});
 
 // Testing warning messages
 router.add({

@@ -126,7 +126,7 @@
     
     var rPattern = /^r`(.*)`$/;
     function route(routes) {
-        var urls = {}, patterns = [], generics = [], missing = default404, error = default503;
+        var preprocess = [], urls = {}, patterns = [], generics = [], missing = default404, error = default503;
         
         function handler(req, res) {
             try {
@@ -135,6 +135,8 @@
                 var handler = info.handler || info;
                 var extra = info.extra;
                 
+                preprocess.forEach(function(process) { process(req, res); });
+                
                 (handler[req.method] || handler.any || handler).call(this, req, res, extra);
             } catch(err) {
                 error.call(this, req, res, err);
@@ -142,6 +144,12 @@
         }
         handler.add = function(routes) {
             for(var key in routes) {
+                if(key === "`preprocess`") {
+                    if(!Array.isArray(routes[key])) { preprocess.push(routes[key]); }
+                    else { Array.prototype.push.apply(preprocess, routes[key]); }
+                    continue;
+                }
+                
                 key.split(/\s+/).forEach(function(rule) {
                     if(rule.indexOf("`") === -1) {
                         if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
