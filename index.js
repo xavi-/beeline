@@ -40,10 +40,10 @@
                 
                 if(err) { throw err; };
                 
+                res.removeHeader("Set-Cookie");
                 res.writeHead(200, { "Cache-Control": "private, max-age=31536000",
                                      "Content-Length": buffer.length,
                                      "Content-Type": mimeType });
-                res.removeHeader("Set-Cookie");
                 res.end(buffer, "binary");
             });
         }
@@ -77,10 +77,10 @@
                 
                 if(err) { throw err; }
                 
+                res.removeHeader("Set-Cookie");
                 res.writeHead(200, { "Cache-Control": "private, max-age=31536000",
                                      "Content-Length": buffer.length,
                                      "Content-Type": mimeLookup[ext] });
-                res.removeHeader("Set-Cookie");
                 res.end(buffer, "binary");
             });
         };

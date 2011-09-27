@@ -98,6 +98,7 @@ var staticFile = bee.staticFile("../index.js", "application/x-javascript");
 fs.readFile("../index.js", function(err, data) {
     if(err) { throw err; }
     
+    var isHeadWritten = false;
     staticFile({ url: "/test" }, { // Mock response
        writeHead: function(status, headers) {
             assert.equal(status, 200);
@@ -105,9 +106,11 @@ fs.readFile("../index.js", function(err, data) {
             assert.equal(headers["Content-Length"], data.length);
             assert.ok(headers["Cache-Control"]);
             tests.finished();
+            isHeadWritten = true;
         },
         removeHeader: function(header) {
             assert.equal(header, "Set-Cookie");
+            assert.ok(!isHeadWritten);
             tests.finished();
         },
         end: function(body) {
@@ -136,6 +139,7 @@ assert.ok(warnings["Extension found without a leading periond ('.'): 'js'"]);
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
     
+    var isHeadWritten = false;
     staticDir({ url: "/test" }, { // Mock response
        writeHead: function(status, headers) {
             assert.equal(status, 200);
@@ -143,9 +147,11 @@ fs.readFile("../package.json", function(err, data) {
             assert.equal(headers["Content-Length"], data.length);
             assert.ok(headers["Cache-Control"]);
             tests.finished();
+            isHeadWritten = true;
         },
         removeHeader: function(header) {
             assert.equal(header, "Set-Cookie");
+            assert.ok(!isHeadWritten);
             tests.finished();
         },
         end: function(body) {
