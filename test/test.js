@@ -3,7 +3,7 @@ var fs = require("fs");
 var bee = require("../");
 
 var tests = {
-    expected: 27,
+    expected: 29,
     executed: 0,
     finished: function() { tests.executed++; }
 }
@@ -103,6 +103,11 @@ fs.readFile("../index.js", function(err, data) {
             assert.equal(status, 200);
             assert.equal(headers["Content-Type"], "application/x-javascript");
             assert.equal(headers["Content-Length"], data.length);
+            assert.ok(headers["Cache-Control"]);
+            tests.finished();
+        },
+        removeHeader: function(header) {
+            assert.equal(header, "Set-Cookie");
             tests.finished();
         },
         end: function(body) {
@@ -136,6 +141,11 @@ fs.readFile("../package.json", function(err, data) {
             assert.equal(status, 200);
             assert.equal(headers["Content-Type"], "application/json");
             assert.equal(headers["Content-Length"], data.length);
+            assert.ok(headers["Cache-Control"]);
+            tests.finished();
+        },
+        removeHeader: function(header) {
+            assert.equal(header, "Set-Cookie");
             tests.finished();
         },
         end: function(body) {
