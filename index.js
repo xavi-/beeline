@@ -2,11 +2,12 @@
     var url = require("url");
     var fs = require("fs");
     var path = require("path");
+    var crypto = require("crypto");
     
     var getBuffer = (function() {
         var buffers = {};
         
-        function addBuffer(path) {
+        function watchBuffer(path) {
             if(path in buffers) { return; }
             
             buffers[path] = null;
@@ -17,35 +18,45 @@
             if(buffers[filePath]) { return callback(null, buffers[filePath]); }
             
             path.exists(filePath, function(exists) {
-                if(!exists) { return callback("file-not-found", null); }
+                if(!exists) { return callback({ "file-not-found": true, path: filePath }, null); }
                 
                 fs.readFile(filePath, function(err, data) {
-                    if(err) { callback(err); };
+                    if(err) { return callback(err, null); };
                     
-                    addBuffer(filePath);
-                    buffers[filePath] = data;
-                    callback(err, data);
+                    watchBuffer(filePath);
+                    buffers[filePath] = { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") };
+                    callback(null, buffers[filePath]);
                 });
             });
         };
     })();
     
+    function sendBuffer(req, res, mimeType) {
+        return function(err, buffer) {
+            if(err && err["file-not-found"]) {
+                console.error("Could not find file: " + err.path);
+                return default404(req, res);
+            }
+            
+            if(err) { throw err; };
+            
+            res.removeHeader("Set-Cookie");
+            res.setHeader("Cache-Control", "private, max-age=31536000");
+            res.setHeader("ETag", buffer.sum);
+            
+            if(req.headers["if-none-match"] === buffer.sum) {
+                res.writeHead(304, { "ETag": buffer.sum });
+                return res.end();
+            }
+            res.writeHead(200, { "Content-Length": buffer.data.length,
+                                 "Content-Type": mimeType });
+            res.end(buffer.data, "binary");
+        };
+    }
+    
     var staticFile = (function() {
         function handler(path, mimeType, req, res) {
-            getBuffer(path, function(err, buffer) {
-                if(err === "file-not-found") {
-                    console.error("Could find file: " + path);
-                    return default404(req, res);
-                }
-                
-                if(err) { throw err; };
-                
-                res.removeHeader("Set-Cookie");
-                res.writeHead(200, { "Cache-Control": "private, max-age=31536000",
-                                     "Content-Length": buffer.length,
-                                     "Content-Type": mimeType });
-                res.end(buffer, "binary");
-            });
+            getBuffer(path, sendBuffer(req, res, mimeType));
         }
         
         return function staticFile(path, mime) {
@@ -65,24 +76,11 @@
             var ext = path.extname(filePath).toLowerCase();
             
             if(!(ext in mimeLookup)) {
-                console.error("Could find file: " + filePath);
+                console.error("Could not find file: " + filePath);
                 return default404(req, res);
             }
             
-            getBuffer(filePath, function(err, buffer) {
-                if(err === "file-not-found") {
-                    console.error("Could find file: " + filePath);
-                    return default404(req, res);
-                }
-                
-                if(err) { throw err; }
-                
-                res.removeHeader("Set-Cookie");
-                res.writeHead(200, { "Cache-Control": "private, max-age=31536000",
-                                     "Content-Length": buffer.length,
-                                     "Content-Type": mimeLookup[ext] });
-                res.end(buffer, "binary");
-            });
+            getBuffer(filePath, sendBuffer(req, res, mimeLookup[ext]));
         };
     }
     
@@ -96,6 +94,10 @@
     }
     
     function default503(req, res, err) {
+        console.error("Error accessing: " + req.method + " " + req.url);
+        console.error(err.message);
+        console.error(err.stack);
+        
         var body = [ "503'd" ];
         body.push("An exception was thrown while accessing: " + req.method + " " + req.url);
         body.push("Exception: " + err.message);
@@ -104,10 +106,6 @@
         res.writeHead(503, { "Content-Length": body.length,
                              "Content-Type": "text/plain" });
         res.end(body);
-        
-        console.error("Error accessing: " + req.method + " " + req.url);
-        console.error(err.message);
-        console.error(err.stack);
     }
     
     function findPattern(patterns, path) {

@@ -98,13 +98,17 @@ var staticFile = bee.staticFile("../index.js", "application/x-javascript");
 fs.readFile("../index.js", function(err, data) {
     if(err) { throw err; }
     
-    var isHeadWritten = false;
-    staticFile({ url: "/test" }, { // Mock response
-       writeHead: function(status, headers) {
+    var isHeadWritten = false, setHeaders = {};
+    staticFile({ headers: {}, url: "/test" }, { // Mock response
+        setHeader: function(type, val) {
+            setHeaders[type] = val;
+        },
+        writeHead: function(status, headers) {
             assert.equal(status, 200);
             assert.equal(headers["Content-Type"], "application/x-javascript");
             assert.equal(headers["Content-Length"], data.length);
-            assert.ok(headers["Cache-Control"]);
+            assert.ok(setHeaders["Cache-Control"]);
+            assert.ok(setHeaders["ETag"]);
             tests.finished();
             isHeadWritten = true;
         },
@@ -139,13 +143,17 @@ assert.ok(warnings["Extension found without a leading periond ('.'): 'js'"]);
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
     
-    var isHeadWritten = false;
-    staticDir({ url: "/test" }, { // Mock response
-       writeHead: function(status, headers) {
+    var isHeadWritten = false, setHeaders = {};
+    staticDir({ headers: {}, url: "/test" }, { // Mock response
+        setHeader: function(type, val) {
+            setHeaders[type] = val;
+        },
+        writeHead: function(status, headers) {
             assert.equal(status, 200);
             assert.equal(headers["Content-Type"], "application/json");
             assert.equal(headers["Content-Length"], data.length);
-            assert.ok(headers["Cache-Control"]);
+            assert.ok(setHeaders["Cache-Control"]);
+            assert.ok(setHeaders["ETag"]);
             tests.finished();
             isHeadWritten = true;
         },
