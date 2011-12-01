@@ -94,6 +94,23 @@ assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `503`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
+//Testing explicit 404 and error calls
+var router2 = bee.route({
+    "`404`": function(req, res) {
+        assert.equal(req.url, "/explicit-404");
+        assert.ok(res.isRequest);
+        assert.ok(this.isThis);
+    },
+    "`503`": function(req, res, err) {
+        assert.equal(req.url, "/explicit-503");
+        assert.ok(res.isRequest);
+        assert.ok(err.isError);
+        assert.ok(this.isThis);
+    }
+})
+router2.missing({ url: "/explicit-404" }, { isRequest: true }, { isThis: true });
+router2.error({ url: "/explicit-503" }, { isRequest: true }, { isError: true }, { isThis: true });
+
 var staticFile = bee.staticFile("../index.js", "application/x-javascript");
 fs.readFile("../index.js", function(err, data) {
     if(err) { throw err; }

@@ -176,6 +176,12 @@
                 });
             }
         };
+        handler.missing = function(req, res, thisp) {
+            missing.call(thisp, req, res);
+        }
+        handler.error = function(req, res, err, thisp) {
+            error.call(thisp, req, res, err);
+        }
         handler.add(routes);
         
         return handler;

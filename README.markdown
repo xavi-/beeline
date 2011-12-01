@@ -25,11 +25,15 @@ Currently works with node.js v0.3.1 and above
         },
         "`404`": function(req, res) {
             // Called when no other route rule are matched
+            //
+            // This handler can later be called explicitly with router.missing
         },
         "`503`": function(req, res, err) {
             // Called when an exception is thrown by another router function
             // The error that caused the exception is passed as the third parameter
             // This _not_ guarranteed to catch all exceptions
+            //
+            // This handler can later be called explicitly with router.error
         }
     });
     
@@ -50,6 +54,19 @@ Currently works with node.js v0.3.1 and above
             "any": function(req, res) {
                 // Called when req.url === "/my-method" and req.method is not "GET" or "POST"
             }
+        },
+        "/explicit-calls": function(req, res) { // If necessary you can reroute requests
+            if(url.parse(req.url).query["item-name"] === "unknown") {
+                return router.missing(req, res, this); // Calls the 404 (aka missing) handler
+                // The last parameter is optional.  It sets the this pointer in the 404 handler.
+            }
+            
+            if(url.parse(req.url).query["item-name"] === "an-error") {
+                return router.error(req, res, err, this); // Calls the 503 (aka error) handler
+                // The last parameter is optional.  It sets the this pointer in the 503 handler.
+            }
+            
+            // Do normal request handling
         }
     });
     
