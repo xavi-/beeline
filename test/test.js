@@ -6,7 +6,7 @@ var tests = {
     expected: 29,
     executed: 0,
     finished: function() { tests.executed++; }
-}
+};
 var warnings = {};
 console.warn = function(msg) { warnings[msg] = true; tests.finished(); };
 
@@ -107,7 +107,7 @@ var router2 = bee.route({
         assert.ok(err.isError);
         assert.ok(this.isThis);
     }
-})
+});
 router2.missing({ url: "/explicit-404" }, { isRequest: true }, { isThis: true });
 router2.error({ url: "/explicit-503" }, { isRequest: true }, { isError: true }, { isThis: true });
 

@@ -21,7 +21,7 @@
                 if(!exists) { return callback({ "file-not-found": true, path: filePath }, null); }
                 
                 fs.readFile(filePath, function(err, data) {
-                    if(err) { return callback(err, null); };
+                    if(err) { return callback(err, null); }
                     
                     watchBuffer(filePath);
                     buffers[filePath] = { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") };
@@ -38,7 +38,7 @@
                 return default404(req, res);
             }
             
-            if(err) { throw err; };
+            if(err) { throw err; }
             
             res.removeHeader("Set-Cookie");
             res.setHeader("Cache-Control", "private, max-age=31536000");
@@ -134,12 +134,12 @@
             try {
                 var path = url.parse(req.url).pathname;
                 var info = (urls[path] || findPattern(patterns, path) || findGeneric(generics, req) || missing);
-                var handler = info.handler || info;
+                var callback = info.handler || info;
                 var extra = info.extra;
                 
                 preprocess.forEach(function(process) { process(req, res); });
                 
-                (handler[req.method] || handler.any || handler).call(this, req, res, extra);
+                (callback[req.method] || callback.any || callback).call(this, req, res, extra);
             } catch(err) {
                 error.call(this, req, res, err);
             }
@@ -178,14 +178,14 @@
         };
         handler.missing = function(req, res, thisp) {
             missing.call(thisp, req, res);
-        }
+        };
         handler.error = function(req, res, err, thisp) {
             error.call(thisp, req, res, err);
-        }
+        };
         handler.add(routes);
         
         return handler;
-    };
+    }
     context.route = route;
     context.staticFile = staticFile;
     context.staticDir = staticDir;
