@@ -71,8 +71,9 @@
             }
         }
         
-        return function(req, res, match) {
-            var filePath = path.join.apply(path, [ fileDir ].concat(match));
+        return function(req, res, extra, matches) {
+            matches = matches || extra;
+            var filePath = path.join.apply(path, [ fileDir ].concat(matches));
             var ext = path.extname(filePath).toLowerCase();
             
             if(!(ext in mimeLookup)) {
@@ -110,8 +111,8 @@
     
     function findPattern(patterns, path) {
         for(var i = 0, l = patterns.length; i < l; i++) {
-            if(patterns[i].regx.test(path)) {
-                return { handler: patterns[i].handler, extra: patterns[i].regx.exec(path).slice(1) }; 
+            if(patterns[i].regex.test(path)) {
+                return { handler: patterns[i].handler, extra: patterns[i].regex.exec(path).slice(1) };
             }
         }
         
@@ -125,8 +126,26 @@
         
         return null;
     }
-    
-    var rPattern = /^r`(.*)`$/;
+
+    var rRegExUrl = /^r`(.*)`$/, rToken = /`(.*?)(\.\.\.)?`/g;
+    function createTokenHandler(names, handler) {
+        return function(req, res, vals) {
+            var extra = Object.create(null);
+            for(var i = 0; i < names.length; i++) {
+                extra[names[i]] = vals[i];
+            }
+            handler.call(this, req, res, extra, vals);
+        };
+    }
+    function parseToken(rule, handler) {
+        var tokens = [];
+        var transform = rule.replace(rToken, function replaceToken(_, token, isExtend) {
+            tokens.push(token);
+            return (isExtend ? "(.*?)" : "([^/]*?)");
+        });
+        var rRule = new RegExp("^" + transform + "$");
+        return { regex: rRule, handler: createTokenHandler(tokens, handler) };
+    }
     function route(routes) {
         var preprocess = [], urls = {}, patterns = [], generics = [], missing = default404, error = default503;
         
@@ -162,14 +181,20 @@
                     } else if(rule === "`503`" || rule === "`error`") {
                         if(error !== default503) { console.warn("Duplicate beeline rule: " + rule); }
                         error = routes[key];
-                    } else if(rPattern.test(rule)) {
-                        var rRule = new RegExp(rPattern.exec(rule)[1]);
-                        if(patterns.some(function(p) { return p.regx.toString() === rRule.toString(); })) {
-                            console.warn("Duplicate beeline rule: " + rule);
-                        }
-                        patterns.push({ regx: rRule, handler: routes[key] });
                     } else if(rule === "`generics`") {
                         Array.prototype.push.apply(generics, routes[key]);
+                    } else if(rRegExUrl.test(rule)) {
+                        var rRule = new RegExp(rRegExUrl.exec(rule)[1]);
+                        if(patterns.some(function(p) { return p.regex.toString() === rRule.toString(); })) {
+                            console.warn("Duplicate beeline rule: " + rule);
+                        }
+                        patterns.push({ regex: rRule, handler: routes[key] });
+                    } else if(rToken.test(rule)) {
+                        var pattern = parseToken(rule, routes[key]);
+                        if(patterns.some(function(p) { return p.regex.toString() === pattern.regex.toString(); })) {
+                            console.warn("Duplicate beeline rule: " + rule);
+                        }
+                        patterns.push(pattern);
                     } else {
                         console.warn("Invalid beeline rule: " + rule);
                     }

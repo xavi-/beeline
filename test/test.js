@@ -3,7 +3,7 @@ var fs = require("fs");
 var bee = require("../");
 
 var tests = {
-    expected: 29,
+    expected: 34,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -13,8 +13,25 @@ console.warn = function(msg) { warnings[msg] = true; tests.finished(); };
 var router = bee.route({
     "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); tests.finished(); },
     "/throw-error": function(req, res) { throw Error("503 should catch"); },
-    "r`^/name/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
-        assert.equal(req.url, "/name/smith/will");
+    "/names/`last-name`/`first-name`": function(req, res, tokens) {
+        assert.equal(req.url, "/names/smith/will");
+        assert.equal(tokens["first-name"], "will");
+        assert.equal(tokens["last-name"], "smith");
+        tests.finished();
+    },
+    "/static/`path...`": function(req, res, tokens) {
+        assert.equal(req.url, "/static/pictures/actors/smith/will.jpg");
+        assert.equal(tokens["path"], "pictures/actors/smith/will.jpg");
+        tests.finished();
+    },
+    "/`user`/static/`path...`": function(req, res, tokens) {
+        assert.equal(req.url, "/da-oozer/static/pictures/venkman.jpg");
+        assert.equal(tokens["user"], "da-oozer");
+        assert.equal(tokens["path"], "pictures/venkman.jpg");
+        tests.finished();
+    },
+    "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
+        assert.equal(req.url, "/actors/smith/will");
         assert.equal(matches[0], "smith");
         assert.equal(matches[1], "will");
         tests.finished();
@@ -42,7 +59,10 @@ var router = bee.route({
 });
 router({ url: "/test?param=1&woo=2" });
 router({ url: "/throw-error" });
-router({ url: "/name/smith/will" });
+router({ url: "/names/smith/will" });
+router({ url: "/actors/smith/will" });
+router({ url: "/da-oozer/static/pictures/venkman.jpg" });
+router({ url: "/static/pictures/actors/smith/will.jpg" });
 router({ url: "/random", triggerGeneric: true });
 router({ url: "/url-not-found" });
 
@@ -82,14 +102,16 @@ router({ url: "/test-preprocess" }, {});
 // Testing warning messages
 router.add({
     "/home": function() { },
-    "r`^/name/([\\w]+)/([\\w]+)$`": function() { },
+    "r`^/actors/([\\w]+)/([\\w]+)$`": function() { },
+    "/`user`/static/`path...`": function() { },
     "`404`": function() { },
     "`503`": function() { },
     "`not-a-valid-rule": function() { }
 });
 
 assert.ok(warnings["Duplicate beeline rule: /home"]);
-assert.ok(warnings["Duplicate beeline rule: r`^/name/([\\w]+)/([\\w]+)$`"]);
+assert.ok(warnings["Duplicate beeline rule: r`^/actors/([\\w]+)/([\\w]+)$`"]);
+assert.ok(warnings["Duplicate beeline rule: /`user`/static/`path...`"]);
 assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `503`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
@@ -181,10 +203,25 @@ fs.readFile("../package.json", function(err, data) {
         },
         end: function(body) {
             assert.deepEqual(body, data);
-            fs.unwatchFile("../package.json");
+            fs.unwatchFile("../package.json"); // Internally beelines watches files for changes
             tests.finished();
         }
     }, [ "package.json" ]);
+});
+fs.readFile("../package.json", function(err, data) {
+    if(err) { throw err; }
+
+    var isHeadWritten = false, setHeaders = {};
+    staticDir({ headers: {}, url: "/test" }, { // Mock response
+        setHeader: function(type, val) { },
+        writeHead: function(status, headers) { },
+        removeHeader: function(header) { },
+        end: function(body) {
+            assert.deepEqual(body, data);
+            fs.unwatchFile("../package.json"); // Internally beelines watches files for changes
+            tests.finished();
+        }
+    }, { optional: "third parameter" }, [ "package.json" ]);
 });
 staticDir({ url: "/test" }, { // Mock response
     writeHead: function(status, headers) {

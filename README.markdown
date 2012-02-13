@@ -18,10 +18,33 @@ Currently works with node.js v0.3.1 and above
         "/cheggit": function(req, res) {
             // Called when req.url === "/cheggit" or req.url === "/cheggit?woo=poo"
         },
-        "r`^/name/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
-            // Called when req.url matches this regex: "^/name/([\\w]+)/([\\w]+)$"
+        "/names/`last-name`/`first-name`": function(req, res, tokens, values) {
+            // Called when req.url contains three parts, the first of is "name".
+            // The parameter tokens is an object that maps token names to values.
+            // For example if req.url === "/names/smith/will"
+            //   then tokens ===  { "first-name": "will", "last-name": "smith" }
+            //   and values === [ "will", "smith" ]
+        },
+        "/static/`path...`": function(req, res, tokens, values) {
+            // Called when req.url starts with "/static/"
+            // The parameter tokens is an object that maps token name to a value
+            // The parameter values is a list of
+            // For example if req.url === "/static/pictures/actors/smith/will.jpg"
+            //   then tokens === { "path": "pictures/actors/smith/will.jpg" }
+            //   and values === [ "pictures/actors/smith/will.jpg" ]
+        },
+        "/`user`/static/`path...`": function(req, res, tokens, values) {
+            // Called when req.url contains at least three parts, the second of which is "static"
+            // The parameter tokens is an object that maps token names and value
+            // For example if req.url === "/da-oozer/static/pictures/venkman.jpg"
+            //   then tokens === { "user": "da-oozer", "path": "pictures/venkman.jpg" }
+            //   and values === [ "da-oozer", pictures/venkman.jpg" ]
+        },
+        "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
+            // Called when req.url matches this regex: "^/actors/([\\w]+)/([\\w]+)$"
             // An array of captured groups is passed as the third parameter
-            // For example if req.url === "/name/smith/will" then matches === [ "smith", "will" ]
+            // For example if req.url === "/actors/smith/will"
+            //   then matches === [ "smith", "will" ]
         },
         "`404`": function(req, res) {
             // Called when no other route rule are matched
@@ -81,13 +104,13 @@ To start, simply store the `beeline` library in a local variable:
 
 The `beeline` library contains the following three methods:
 
-- `bee.route(routes)`: Used to create a new router.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) objects as parameters.  The `routes` parameter is an objects that maps rules to handlers.  See examples section for more details.
-- `bee.staticFile(path, mimeType)`: This is a utility method that is used to quickly expose static files.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) objects as parameters.  When `rtn_fn` is called, the file contents located at `path` are served (via the ServerResponse) with the `Content-Type` set to the `mimeType` parameter.  If the file at `path` does not exist a `404` is served.  Note that the `Cache-Control` header on the response is given a very large max age and all `Set-Cookie` headers are removed.  Here's an example of how you might use `bee.staticFile`:
+- `bee.route(routes)`: Used to create a new router.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.6.10/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.6.10/api/http.html#http.ServerResponse) objects as parameters.  The `routes` parameter is an objects that maps rules to handlers.  See examples section for more details.
+- `bee.staticFile(path, mimeType)`: This is a utility method that is used to quickly expose static files.  It returns a function called `rtn_fn` that takes [ServerRequest](http://nodejs.org/docs/v0.6.10/api/http.html#http.ServerRequest) and [ServerResponse](http://nodejs.org/docs/v0.6.10/api/http.html#http.ServerResponse) objects as parameters.  When `rtn_fn` is called, the file contents located at `path` are served (via the ServerResponse) with the `Content-Type` set to the `mimeType` parameter.  If the file at `path` does not exist a `404` is served.  Note that the `Cache-Control` header on the response is given a very large max age and all `Set-Cookie` headers are removed.  Here's an example of how you might use `bee.staticFile`:
 
         bee.route({
             "/robots.txt": bee.staticFile("./content/robots.txt", "text/plain")
         });
-- `bee.staticDir(path, mimeTypes)`: This is utility method is used to expose directories of files.  It returns a function called `rtn_fn` that takes a [ServerRequest](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerRequest) object, a [ServerResponse](http://nodejs.org/docs/v0.4.5/api/http.html#http.ServerResponse) object, and an array of strings called `matches` as parameters.  Whenever `rtn_fn` is called, the items of `matches` are joined together and then concatenated to `path`.  The resulting string is assumed to be a path to a specific file.  If this file exists, its contents are served (via the ServerResponse) with the `Content-Type` set to the value that corresponds to the file's extension in the `mimeTypes` object.  If the resulting string doesn't point to an existing file or if the file's extension is not found in `mimeTypes`, then a `404` is served.  Also, file extensions require a leading period (`.`) and are assumed to be lowercase.  Note that the `Cache-Control` header on the response is given a very large max age and all `Set-Cookie` headers are removed.  Here's an example of how you might use `bee.staticDir`:
+- `bee.staticDir(path, mimeTypes)`: This is utility method is used to expose directories of files.  It returns a function called `rtn_fn` that takes a [ServerRequest](http://nodejs.org/docs/v0.6.10/api/http.html#http.ServerRequest) object, a [ServerResponse](http://nodejs.org/docs/v0.6.10/api/http.html#http.ServerResponse) object, an optional third parameter, and an array of strings called `matches` as parameters.  Whenever `rtn_fn` is called, the items of `matches` are joined together and then concatenated to `path`.  The resulting string is assumed to be a path to a specific file.  If this file exists, its contents are served (via the ServerResponse) with the `Content-Type` set to the value that corresponds to the file's extension in the `mimeTypes` object.  If the resulting string doesn't point to an existing file or if the file's extension is not found in `mimeTypes`, then a `404` is served.  Also, file extensions require a leading period (`.`) and are assumed to be lowercase.  Note that the `Cache-Control` header on the response is given a very large max age and all `Set-Cookie` headers are removed.  Here's an example of how you might use `bee.staticDir`:
 
         bee.route({
             // /pics/mofo.png serves ./content/pics/mofo.png
@@ -96,7 +119,17 @@ The `beeline` library contains the following three methods:
             // This helps prevent accidental exposure.
             "r`^/pics/(.*)$`":
                 bee.staticDir("./content/pics/", { ".gif": "image/gif", ".png": "image/png",
-                                                   ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
+                                                   ".jpg": "image/jpeg", ".jpeg": "image/jpeg" }),
+            // Also works with URLs with tokens
+            // /static/help/faq.html serves ./static/help/faq.html
+            // /static/properties.json serves a 404 since there's no corresponding mimeType specified.
+            "/static/`path...`":
+                bee.staticDir("./static/", { ".txt": "text/plain", ".html": "text/html",
+                                             ".css": "text/css", ".xml": "text/xml" }),
+            // More complicated path constructs also works
+            // /will-smith/img-library/headshots/sexy42.jpg serves ./user-images/will-smith/headshots/sexy42.jpg
+            "/`user`/img-library/`path...`":
+                bee.staticDir("./user-images/", { ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
         });
 
 ### Precedence Rules
@@ -104,7 +137,8 @@ The `beeline` library contains the following three methods:
 In the event that a request matches two rules, the following precedence rules are considered:
 
 - Fully defined rules take highest precedence.  In other words, `"/index"` has a higher precedences then ``"r`^/index$`"`` even though semantically both rules are exactly the same.
-- Regex rules take higher precedence than `404`
+- Tokens and RegExp rules have the same precednce
+- RegExp rules take higher precedence than `404`
 - `404` has the lowest precedences
 - The `503` rules is outside the precedence rules.  It can potentially be triggered at any time.
 
