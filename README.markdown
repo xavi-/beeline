@@ -64,7 +64,8 @@ var router = bee.route({ // Create a new router
 router.add({ // Use `.add` to append new rules to a router 
     "/ /home r`^/index(.php|.html|.xhtml)?$`?": function(req, res) {
         // Called when req.url === "/" or req.url === "/home"
-        //    or req.url matches this regex: ^/index(.php|.html|.xhtml)?$ (i.e. req.url === "/index.php")
+        //    or req.url matches this regex: ^/index(.php|.html|.xhtml)?$
+        //      (i.e. req.url === "/index.php" or req.url === "/index.html")
         // Note that any number of rules can be combined using a space.
         // All rules will call the same request handler when matched.
     },
@@ -140,7 +141,8 @@ The `beeline` library contains the following three methods:
             bee.staticDir("./static/", { ".txt": "text/plain", ".html": "text/html",
                                          ".css": "text/css", ".xml": "text/xml" }),
         // More complicated path constructs also works
-        // /will-smith/img-library/headshots/sexy42.jpg serves ./user-images/will-smith/headshots/sexy42.jpg
+        // /will-smith/img-library/headshots/sexy42.jpg
+        //    serves ./user-images/will-smith/headshots/sexy42.jpg
         "/`user`/img-library/`path...`":
             bee.staticDir("./user-images/", { ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
     });
