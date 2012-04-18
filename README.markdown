@@ -147,6 +147,7 @@ The `beeline` library contains the following three methods:
             bee.staticDir("./user-images/", { ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
     });
     ```
+
 ### Precedence Rules
 
 In the event that a request matches two rules, the following precedence rules are considered:
