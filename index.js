@@ -93,7 +93,14 @@
         
         console.log("Someone 404'd: " + req.url);
     }
-    
+    function default405(req, res) {
+        var body = "405'd";
+        res.writeHead(404, { "Content-Length": body.length,
+                             "Content-Type": "text/plain" });
+        res.end(body);
+
+        console.log("Someone 405'd -- url: " + req.url + "; verb: " + req.method);
+    }
     function default503(req, res, err) {
         console.error("Error accessing: " + req.method + " " + req.url);
         console.error(err.message);
@@ -134,7 +141,7 @@
             for(var i = 0; i < names.length; i++) {
                 extra[names[i]] = vals[i];
             }
-            handler.call(this, req, res, extra, vals);
+            executeHandler(handler, this, req, res, extra, vals);
         };
     }
     function parseToken(rule, handler) {
@@ -146,51 +153,65 @@
         var rRule = new RegExp("^" + transform + "$");
         return { regex: rRule, handler: createTokenHandler(tokens, handler) };
     }
+
+    function executeHandler(handler, thisp, req, res, extra, vals) {
+        (handler[req.method] || handler.any || handler).call(thisp, req, res, extra, vals);
+    }
     function route(routes) {
-        var preprocess = [], urls = {}, patterns = [], generics = [], missing = default404, error = default503;
+        var preprocess = [], urls = {}, patterns = [], generics = [];
+        var missing = default404, missingVerb = default405, error = default503;
         
         function handler(req, res) {
             try {
                 var path = url.parse(req.url).pathname;
                 var info = (urls[path] || findPattern(patterns, path) || findGeneric(generics, req) || missing);
-                var callback = info.handler || info;
+                var handler = info.handler || info;
                 var extra = info.extra;
                 
                 preprocess.forEach(function(process) { process(req, res); });
                 
-                (callback[req.method] || callback.any || callback).call(this, req, res, extra);
+                executeHandler(handler, this, req, res, extra);
             } catch(err) {
                 error.call(this, req, res, err);
             }
         }
         handler.add = function(routes) {
             for(var key in routes) {
+                var handler = routes[key];
+
+                if(Object.prototype.toString.call(handler) === "[object Object]") {
+                    handler.any = handler.any || function() { missingVerb.apply(this, arguments); };
+                }
+
                 if(key === "`preprocess`") {
-                    if(!Array.isArray(routes[key])) { preprocess.push(routes[key]); }
-                    else { Array.prototype.push.apply(preprocess, routes[key]); }
+                    if(!Array.isArray(handler)) { preprocess.push(handler); }
+                    else { Array.prototype.push.apply(preprocess, handler); }
                     continue;
                 }
-                
+
                 key.split(/\s+/).forEach(function(rule) {
                     if(rule.indexOf("`") === -1) {
                         if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
-                        urls[rule] = routes[key];
+                        urls[rule] = handler;
                     } else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
                         if(missing !== default404) { console.warn("Duplicate beeline rule: " + rule); }
-                        missing = routes[key];
+                        missing = handler;
+                    } else if(rule === "`405`" || rule === "`missing-verb`" || rule === "`missingVerb`") {
+                        if(missingVerb !== default405) { console.warn("Duplicate beeline rule: " + rule); }
+                        missingVerb = handler;
                     } else if(rule === "`503`" || rule === "`error`") {
                         if(error !== default503) { console.warn("Duplicate beeline rule: " + rule); }
-                        error = routes[key];
+                        error = handler;
                     } else if(rule === "`generics`") {
-                        Array.prototype.push.apply(generics, routes[key]);
+                        Array.prototype.push.apply(generics, handler);
                     } else if(rRegExUrl.test(rule)) {
                         var rRule = new RegExp(rRegExUrl.exec(rule)[1]);
                         if(patterns.some(function(p) { return p.regex.toString() === rRule.toString(); })) {
                             console.warn("Duplicate beeline rule: " + rule);
                         }
-                        patterns.push({ regex: rRule, handler: routes[key] });
+                        patterns.push({ regex: rRule, handler: handler });
                     } else if(rToken.test(rule)) {
-                        var pattern = parseToken(rule, routes[key]);
+                        var pattern = parseToken(rule, handler);
                         if(patterns.some(function(p) { return p.regex.toString() === pattern.regex.toString(); })) {
                             console.warn("Duplicate beeline rule: " + rule);
                         }
@@ -203,6 +224,9 @@
         };
         handler.missing = function(req, res, thisp) {
             missing.call(thisp, req, res);
+        };
+        handler.missingVerb = function(req, res, thisp) {
+            missingVerb.call(thisp, req, res);
         };
         handler.error = function(req, res, err, thisp) {
             error.call(thisp, req, res, err);

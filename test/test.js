@@ -3,7 +3,7 @@ var fs = require("fs");
 var bee = require("../");
 
 var tests = {
-    expected: 34,
+    expected: 37,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -13,21 +13,26 @@ console.warn = function(msg) { warnings[msg] = true; tests.finished(); };
 var router = bee.route({
     "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); tests.finished(); },
     "/throw-error": function(req, res) { throw Error("503 should catch"); },
-    "/names/`last-name`/`first-name`": function(req, res, tokens) {
+    "/names/`last-name`/`first-name`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/names/smith/will");
         assert.equal(tokens["first-name"], "will");
         assert.equal(tokens["last-name"], "smith");
+        assert.equal(vals[0], "smith");
+        assert.equal(vals[1], "will");
         tests.finished();
     },
-    "/static/`path...`": function(req, res, tokens) {
+    "/static/`path...`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/static/pictures/actors/smith/will.jpg");
         assert.equal(tokens["path"], "pictures/actors/smith/will.jpg");
+        assert.equal(vals[0], "pictures/actors/smith/will.jpg");
         tests.finished();
     },
-    "/`user`/static/`path...`": function(req, res, tokens) {
+    "/`user`/static/`path...`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/da-oozer/static/pictures/venkman.jpg");
         assert.equal(tokens["user"], "da-oozer");
         assert.equal(tokens["path"], "pictures/venkman.jpg");
+        assert.equal(vals[0], "da-oozer");
+        assert.equal(vals[1], "pictures/venkman.jpg");
         tests.finished();
     },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
@@ -82,11 +87,29 @@ router.add({
         "GET": function(req, res) { assert.equal(req.method, "GET"); tests.finished(); },
         "POST": function(req, res) { assert.equal(req.method, "POST"); tests.finished(); },
         "any": function(req, res) { assert.ok(req.method !== "GET" || req.method !== "POST"); tests.finished(); }
+    },
+    "/`user`/profile/`path...`": {
+        "POST": function(req, res, tokens, vals) {
+            assert.equal(req.method, "POST");
+            assert.equal(req.url, "/dozer/profile/timeline/2010/holloween");
+            assert.equal(tokens["user"], "dozer");
+            assert.equal(tokens["path"], "timeline/2010/holloween");
+            assert.equal(vals[0], "dozer");
+            assert.equal(vals[1], "timeline/2010/holloween");
+            tests.finished();
+        }
+    },
+    "`405`": function(req, res) {
+        assert.equal(req.method, "GET");
+        assert.equal(req.url, "/dozer/profile/timeline/2010/holloween");
+        tests.finished();
     }
 });
 router({ url: "/method-test", method: "GET" });
 router({ url: "/method-test", method: "POST" });
 router({ url: "/method-test", method: "HEAD" });
+router({ url: "/dozer/profile/timeline/2010/holloween", method: "POST" });
+router({ url: "/dozer/profile/timeline/2010/holloween", method: "GET" });
 
 // Testing preprocessors
 router.add({
@@ -105,6 +128,7 @@ router.add({
     "r`^/actors/([\\w]+)/([\\w]+)$`": function() { },
     "/`user`/static/`path...`": function() { },
     "`404`": function() { },
+    "`405`": function() { },
     "`503`": function() { },
     "`not-a-valid-rule": function() { }
 });
@@ -113,6 +137,7 @@ assert.ok(warnings["Duplicate beeline rule: /home"]);
 assert.ok(warnings["Duplicate beeline rule: r`^/actors/([\\w]+)/([\\w]+)$`"]);
 assert.ok(warnings["Duplicate beeline rule: /`user`/static/`path...`"]);
 assert.ok(warnings["Duplicate beeline rule: `404`"]);
+assert.ok(warnings["Duplicate beeline rule: `405`"]);
 assert.ok(warnings["Duplicate beeline rule: `503`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
