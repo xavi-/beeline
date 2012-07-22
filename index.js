@@ -17,7 +17,7 @@
         return function getBuffer(filePath, callback) {
             if(buffers[filePath]) { return callback(null, buffers[filePath]); }
             
-            path.exists(filePath, function(exists) {
+            fs.exists(filePath, function(exists) {
                 if(!exists) { return callback({ "file-not-found": true, path: filePath }, null); }
                 
                 fs.readFile(filePath, function(err, data) {
