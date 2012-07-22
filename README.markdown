@@ -62,7 +62,7 @@ var router = bee.route({ // Create a new router
 });
 
 router.add({ // Use `.add` to append new rules to a router 
-    "/ /home r`^/index(.php|.html|.xhtml)?$`?": function(req, res) {
+    "/ /home r`^/index(.php|.html|.xhtml)?$`": function(req, res) {
         // Called when req.url === "/" or req.url === "/home"
         //    or req.url matches this regex: ^/index(.php|.html|.xhtml)?$
         //      (i.e. req.url === "/index.php" or req.url === "/index.html")
