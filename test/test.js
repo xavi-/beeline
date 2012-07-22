@@ -12,7 +12,7 @@ console.warn = function(msg) { warnings[msg] = true; tests.finished(); };
 
 var router = bee.route({
     "/test": function(req, res) { assert.equal(req.url, "/test?param=1&woo=2"); tests.finished(); },
-    "/throw-error": function(req, res) { throw Error("503 should catch"); },
+    "/throw-error": function(req, res) { throw Error("500 should catch"); },
     "/names/`last-name`/`first-name`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/names/smith/will");
         assert.equal(tokens["first-name"], "will");
@@ -50,7 +50,7 @@ var router = bee.route({
         assert.equal(req.url, "/url-not-found");
         tests.finished();
     },
-    "`503`": function(req, res, err) {
+    "`500`": function(req, res, err) {
         try { assert.equal(req.url, "/throw-error"); }
         catch(e) {
             console.error(e.stack);
@@ -58,7 +58,7 @@ var router = bee.route({
             console.error(err.stack);
             process.exit();
         }
-        assert.equal(err.message, "503 should catch");
+        assert.equal(err.message, "500 should catch");
         tests.finished();
     }
 });
@@ -129,7 +129,7 @@ router.add({
     "/`user`/static/`path...`": function() { },
     "`404`": function() { },
     "`405`": function() { },
-    "`503`": function() { },
+    "`500`": function() { },
     "`not-a-valid-rule": function() { }
 });
 
@@ -138,7 +138,7 @@ assert.ok(warnings["Duplicate beeline rule: r`^/actors/([\\w]+)/([\\w]+)$`"]);
 assert.ok(warnings["Duplicate beeline rule: /`user`/static/`path...`"]);
 assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `405`"]);
-assert.ok(warnings["Duplicate beeline rule: `503`"]);
+assert.ok(warnings["Duplicate beeline rule: `500`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
 //Testing explicit 404 and error calls
@@ -148,15 +148,15 @@ var router2 = bee.route({
         assert.ok(res.isRequest);
         assert.ok(this.isThis);
     },
-    "`503`": function(req, res, err) {
-        assert.equal(req.url, "/explicit-503");
+    "`500`": function(req, res, err) {
+        assert.equal(req.url, "/explicit-500");
         assert.ok(res.isRequest);
         assert.ok(err.isError);
         assert.ok(this.isThis);
     }
 });
 router2.missing({ url: "/explicit-404" }, { isRequest: true }, { isThis: true });
-router2.error({ url: "/explicit-503" }, { isRequest: true }, { isError: true }, { isThis: true });
+router2.error({ url: "/explicit-500" }, { isRequest: true }, { isError: true }, { isThis: true });
 
 var staticFile = bee.staticFile("../index.js", "application/x-javascript");
 fs.readFile("../index.js", function(err, data) {
@@ -263,5 +263,5 @@ staticDir({ url: "/test" }, { // Mock response
 
 process.on("exit", function() {
     assert.equal(tests.executed, tests.expected);
-    console.log("\n\nAll done everything passed");
+    console.log("\n\nAll done.  Everything passed.");
 });

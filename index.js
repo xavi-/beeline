@@ -101,17 +101,17 @@
 
         console.log("Someone 405'd -- url: " + req.url + "; verb: " + req.method);
     }
-    function default503(req, res, err) {
+    function default500(req, res, err) {
         console.error("Error accessing: " + req.method + " " + req.url);
         console.error(err.message);
         console.error(err.stack);
         
-        var body = [ "503'd" ];
+        var body = [ "500'd" ];
         body.push("An exception was thrown while accessing: " + req.method + " " + req.url);
         body.push("Exception: " + err.message);
         body.push(err.stack);
         body = body.join("\n");
-        res.writeHead(503, { "Content-Length": body.length,
+        res.writeHead(500, { "Content-Length": body.length,
                              "Content-Type": "text/plain" });
         res.end(body);
     }
@@ -159,7 +159,7 @@
     }
     function route(routes) {
         var preprocess = [], urls = {}, patterns = [], generics = [];
-        var missing = default404, missingVerb = default405, error = default503;
+        var missing = default404, missingVerb = default405, error = default500;
         
         function handler(req, res) {
             try {
@@ -199,8 +199,8 @@
                     } else if(rule === "`405`" || rule === "`missing-verb`" || rule === "`missingVerb`") {
                         if(missingVerb !== default405) { console.warn("Duplicate beeline rule: " + rule); }
                         missingVerb = handler;
-                    } else if(rule === "`503`" || rule === "`error`") {
-                        if(error !== default503) { console.warn("Duplicate beeline rule: " + rule); }
+                    } else if(rule === "`500`" || rule === "`error`") {
+                        if(error !== default500) { console.warn("Duplicate beeline rule: " + rule); }
                         error = handler;
                     } else if(rule === "`generics`") {
                         Array.prototype.push.apply(generics, handler);

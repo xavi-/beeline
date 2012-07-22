@@ -52,7 +52,7 @@ var router = bee.route({ // Create a new router
         //
         // This handler can later be called explicitly with router.missing
     },
-    "`503`": function(req, res, err) {
+    "`500`": function(req, res, err) {
         // Called when an exception is thrown by another router function
         // The error that caused the exception is passed as the third parameter
         // This _not_ guarranteed to catch all exceptions
@@ -94,8 +94,8 @@ router.add({ // Use `.add` to append new rules to a router
         }
         
         if(url.parse(req.url).query["item-name"] === "an-error") {
-            return router.error(req, res, err, this); // Calls the 503 (aka error) handler
-            // The last parameter is optional.  It sets the this pointer in the 503 handler.
+            return router.error(req, res, err, this); // Calls the 500 (aka error) handler
+            // The last parameter is optional.  It sets the this pointer in the 500 handler.
         }
         
         // Do normal request handling
@@ -156,7 +156,7 @@ In the event that a request matches two rules, the following precedence rules ar
 - Tokens and RegExp rules have the same precednce
 - RegExp rules take higher precedence than `404`
 - `404` and `405` have the lowest precedences
-- The `503` rules is outside the precedence rules.  It can potentially be triggered at any time.
+- The `500` rules is outside the precedence rules.  It can potentially be triggered at any time.
 
 If the exact same rule is defined twice, then it's unspecified which request handler will be triggered.
 
