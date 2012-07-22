@@ -45,12 +45,13 @@
             res.setHeader("ETag", buffer.sum);
             
             if(req.headers["if-none-match"] === buffer.sum) {
-                res.writeHead(304, { "ETag": buffer.sum });
+                res.writeHead(304);
                 return res.end();
+            } else {
+                res.writeHead(200, { "Content-Length": buffer.data.length,
+                                     "Content-Type": mimeType });
+                return res.end(buffer.data, "binary");
             }
-            res.writeHead(200, { "Content-Length": buffer.data.length,
-                                 "Content-Type": mimeType });
-            res.end(buffer.data, "binary");
         };
     }
     
