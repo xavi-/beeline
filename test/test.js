@@ -1,9 +1,10 @@
 var assert = require("assert");
 var fs = require("fs");
+var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 37,
+    expected: 40,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -206,9 +207,11 @@ var staticDir = bee.staticDir("../", { ".json": "application/json", "js": "appli
 assert.ok(warnings["Extension found without a leading periond ('.'): 'js'"]);
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
+
+    var sum = crypto.createHash("sha1").update(data).digest("hex");
     
     var isHeadWritten = false, setHeaders = {};
-    staticDir({ headers: {}, url: "/test" }, { // Mock response
+    staticDir({ headers: {}, url: "/test" }, { // Mock response of an empty cache
         setHeader: function(type, val) {
             setHeaders[type] = val;
         },
@@ -217,7 +220,7 @@ fs.readFile("../package.json", function(err, data) {
             assert.equal(headers["Content-Type"], "application/json");
             assert.equal(headers["Content-Length"], data.length);
             assert.ok(setHeaders["Cache-Control"]);
-            assert.ok(setHeaders["ETag"]);
+            assert.equal(setHeaders["ETag"], sum);
             tests.finished();
             isHeadWritten = true;
         },
@@ -236,6 +239,35 @@ fs.readFile("../package.json", function(err, data) {
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
 
+    var sum = crypto.createHash("sha1").update(data).digest("hex");
+
+    var isHeadWritten = false, setHeaders = {};
+    staticDir({ headers: { "if-none-match": sum }, url: "/test" }, { // Mock cached response
+        setHeader: function(type, val) {
+            setHeaders[type] = val;
+        },
+        writeHead: function(status, headers) {
+            assert.equal(status, 304);
+            assert.ok(setHeaders["Cache-Control"]);
+            assert.equal(setHeaders["ETag"], sum);
+            tests.finished();
+            isHeadWritten = true;
+        },
+        removeHeader: function(header) {
+            assert.equal(header, "Set-Cookie");
+            assert.ok(!isHeadWritten);
+            tests.finished();
+        },
+        end: function(body) {
+            assert.ok(!body); // Ensure an empty body was sent
+            fs.unwatchFile("../package.json"); // Internally beelines watches files for changes
+            tests.finished();
+        }
+    }, [ "package.json" ]);
+});
+fs.readFile("../package.json", function(err, data) {
+    if(err) { throw err; }
+
     var isHeadWritten = false, setHeaders = {};
     staticDir({ headers: {}, url: "/test" }, { // Mock response
         setHeader: function(type, val) { },
@@ -246,7 +278,7 @@ fs.readFile("../package.json", function(err, data) {
             fs.unwatchFile("../package.json"); // Internally beelines watches files for changes
             tests.finished();
         }
-    }, { optional: "third parameter" }, [ "package.json" ]);
+    }, { optional: "third parameter" }, [ "package.json" ]); // Called with optional third parameter
 });
 staticDir({ url: "/test" }, { // Mock response
     writeHead: function(status, headers) {
