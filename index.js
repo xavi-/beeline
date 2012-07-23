@@ -96,7 +96,7 @@
     }
     function default405(req, res) {
         var body = "405'd";
-        res.writeHead(404, { "Content-Length": body.length,
+        res.writeHead(405, { "Content-Length": body.length,
                              "Content-Type": "text/plain" });
         res.end(body);
 
