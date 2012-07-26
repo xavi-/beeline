@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 40,
+    expected: 49,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -142,22 +142,67 @@ assert.ok(warnings["Duplicate beeline rule: `405`"]);
 assert.ok(warnings["Duplicate beeline rule: `500`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 
-//Testing explicit 404 and error calls
+// Testing explicit 404, 405, and error calls
 var router2 = bee.route({
     "`404`": function(req, res) {
         assert.equal(req.url, "/explicit-404");
-        assert.ok(res.isRequest);
-        assert.ok(this.isThis);
+        assert.equal(res.isCorrectRequest, 1);
+        assert.equal(this.extra, 1);
+        tests.finished();
+    },
+    "`405`": function(req, res) {
+        assert.equal(req.url, "/explicit-405");
+        assert.equal(res.isCorrectRequest, 2);
+        assert.equal(this.extra, 2);
+        tests.finished();
     },
     "`500`": function(req, res, err) {
         assert.equal(req.url, "/explicit-500");
-        assert.ok(res.isRequest);
+        assert.equal(res.isCorrectRequest, 3);
         assert.ok(err.isError);
-        assert.ok(this.isThis);
+        assert.equal(this.extra, 3);
+        tests.finished();
     }
 });
-router2.missing({ url: "/explicit-404" }, { isRequest: true }, { isThis: true });
-router2.error({ url: "/explicit-500" }, { isRequest: true }, { isError: true }, { isThis: true });
+router2.missing({ url: "/explicit-404" }, { isCorrectRequest: 1 }, { extra: 1 });
+router2.missingVerb({ url: "/explicit-405" }, { isCorrectRequest: 2 }, { extra: 2 });
+router2.error({ url: "/explicit-500" }, { isCorrectRequest: 3 }, { isError: true }, { extra: 3 });
+
+// Testing default 404, 405, and error handlers
+var route3 = bee.route();
+route3.missing({ request: true }, {
+    writeHead: function(status, headers) {
+        assert.equal(status, 404);
+        this.contentLength = headers["Content-Length"];
+        tests.finished();
+    },
+    end: function(body) {
+        assert.equal(this.contentLength, body.length);
+        tests.finished();
+    }
+});
+route3.missingVerb({ request: true }, {
+    writeHead: function(status, headers) {
+        assert.equal(status, 405);
+        this.contentLength = headers["Content-Length"];
+        tests.finished();
+    },
+    end: function(body) {
+        assert.equal(this.contentLength, body.length);
+        tests.finished();
+    }
+});
+route3.error({ request: true }, {
+    writeHead: function(status, headers) {
+        assert.equal(status, 500);
+        this.contentLength = headers["Content-Length"];
+        tests.finished();
+    },
+    end: function(body) {
+        assert.equal(this.contentLength, body.length);
+        tests.finished();
+    }
+}, {});
 
 var staticFile = bee.staticFile("../index.js", "application/x-javascript");
 fs.readFile("../index.js", function(err, data) {
