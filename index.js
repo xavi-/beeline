@@ -81,6 +81,11 @@
                 console.error("Could not find file: " + filePath);
                 return default404(req, res);
             }
+
+            if(path.relative(fileDir, filePath).indexOf("..") !== -1) {
+                console.error("Attempted access to parent directory -- root: " + fileDir + "; subdir: " + filePath);
+                return default404(req, res);
+            }
             
             getBuffer(filePath, sendBuffer(req, res, mimeLookup[ext]));
         };

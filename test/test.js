@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 49,
+    expected: 51,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -209,7 +209,7 @@ fs.readFile("../index.js", function(err, data) {
     if(err) { throw err; }
     
     var isHeadWritten = false, setHeaders = {};
-    staticFile({ headers: {}, url: "/test" }, { // Mock response
+    staticFile({ headers: {}, url: "/load-existing-static-file" }, { // Mock response
         setHeader: function(type, val) {
             setHeaders[type] = val;
         },
@@ -236,7 +236,7 @@ fs.readFile("../index.js", function(err, data) {
 });
 
 var static404 = bee.staticFile("../does-not-exists", "not/real");
-static404({ url: "/test" }, { // Mock response
+static404({ url: "/load-non-existent-static-file" }, { // Mock response
     writeHead: function(status, headers) {
         assert.equal(status, 404);
         assert.notEqual(headers["Content-Type"], "not/real");
@@ -256,7 +256,7 @@ fs.readFile("../package.json", function(err, data) {
     var sum = crypto.createHash("sha1").update(data).digest("hex");
     
     var isHeadWritten = false, setHeaders = {};
-    staticDir({ headers: {}, url: "/test" }, { // Mock response of an empty cache
+    staticDir({ headers: {}, url: "/load-existing-file-from-static-dir" }, { // Mock response of an empty cache
         setHeader: function(type, val) {
             setHeaders[type] = val;
         },
@@ -287,7 +287,7 @@ fs.readFile("../package.json", function(err, data) {
     var sum = crypto.createHash("sha1").update(data).digest("hex");
 
     var isHeadWritten = false, setHeaders = {};
-    staticDir({ headers: { "if-none-match": sum }, url: "/test" }, { // Mock cached response
+    staticDir({ headers: { "if-none-match": sum }, url: "/do-304s-work" }, { // Mock cached response
         setHeader: function(type, val) {
             setHeaders[type] = val;
         },
@@ -314,7 +314,7 @@ fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
 
     var isHeadWritten = false, setHeaders = {};
-    staticDir({ headers: {}, url: "/test" }, { // Mock response
+    staticDir({ headers: {}, url: "/called-with-optional-3rd-param" }, { // Mock response
         setHeader: function(type, val) { },
         writeHead: function(status, headers) { },
         removeHeader: function(header) { },
@@ -325,7 +325,7 @@ fs.readFile("../package.json", function(err, data) {
         }
     }, { optional: "third parameter" }, [ "package.json" ]); // Called with optional third parameter
 });
-staticDir({ url: "/test" }, { // Mock response
+staticDir({ url: "/load-unrecognized-file-extension" }, { // Mock response
     writeHead: function(status, headers) {
         assert.equal(status, 404);
         assert.ok(headers["Content-Type"]);
@@ -337,6 +337,17 @@ staticDir({ url: "/test" }, { // Mock response
     }
 }, [ "README.markdown" ]);
 
+staticDir({ url: "/attempt-to-insecurely-access-parent-directory" }, { // Mock response
+    writeHead: function(status, headers) {
+        assert.equal(status, 404);
+        assert.ok(headers["Content-Type"]);
+        tests.finished();
+    },
+    end: function(body) {
+        assert.ok(body);
+        tests.finished();
+    }
+}, [ "..", "..", "ok.json" ]);
 
 process.on("exit", function() {
     assert.equal(tests.executed, tests.expected);
