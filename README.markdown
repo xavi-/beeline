@@ -170,6 +170,16 @@ Alternatively you can clone this git repository:
 
     git clone git://github.com/xavi-/beeline.git
 
+## Running Unit Tests
+
+Execute the following commands to run the beeline's unit tests:
+
+    $ cd <beeline-directory>
+    $ cd test
+    $ node test.js
+
+The last line printed to the console should be, "All done.  Everything passed.", if all the tests passed successfully.
+
 ## Developed by
 * Xavi Ramirez
 
