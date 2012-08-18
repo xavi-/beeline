@@ -1,5 +1,5 @@
 { "name": "beeline"
-, "version": "0.1.11"
+, "version": "0.1.12"
 , "description": "A laughably simplistic router for node.js"
 , "keywords": [ "url", "dispatch", "router", "request handler", "middleware" ]
 , "maintainers":
