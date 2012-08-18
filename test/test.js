@@ -249,7 +249,7 @@ static404({ url: "/load-non-existent-static-file" }, { // Mock response
 });
 
 var staticDir = bee.staticDir("../", { ".json": "application/json", "js": "application/x-javascript" });
-assert.ok(warnings["Extension found without a leading periond ('.'): 'js'"]);
+
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
 

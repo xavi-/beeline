@@ -7,25 +7,25 @@
     var getBuffer = (function() {
         var buffers = {};
         
-        function watchBuffer(path) {
-            if(path in buffers) { return; }
+        function watchBuffer(localPath) {
+            if(localPath in buffers) { return; }
             
-            buffers[path] = null;
-            fs.watchFile(path, function() { buffers[path] = null; });
+            buffers[localPath] = null;
+            fs.watchFile(localPath, function() { buffers[localPath] = null; });
         }
         
-        return function getBuffer(filePath, callback) {
-            if(buffers[filePath]) { return callback(null, buffers[filePath]); }
+        return function getBuffer(localPath, callback) {
+            if(buffers[localPath]) { return callback(null, buffers[localPath]); }
             
-            fs.exists(filePath, function(exists) {
-                if(!exists) { return callback({ "file-not-found": true, path: filePath }, null); }
+            path.exists(localPath, function(exists) {
+                if(!exists) { return callback({ "file-not-found": true, path: localPath }, null); }
                 
-                fs.readFile(filePath, function(err, data) {
+                fs.readFile(localPath, function(err, data) {
                     if(err) { return callback(err, null); }
                     
-                    watchBuffer(filePath);
-                    buffers[filePath] = { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") };
-                    callback(null, buffers[filePath]);
+                    watchBuffer(localPath);
+                    buffers[localPath] = { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") };
+                    callback(null, buffers[localPath]);
                 });
             });
         };
@@ -56,16 +56,17 @@
     }
     
     var staticFile = (function() {
-        function handler(path, mimeType, req, res) {
-            getBuffer(path, sendBuffer(req, res, mimeType));
+        function handler(localPath, mimeType, req, res) {
+            getBuffer(localPath, sendBuffer(req, res, mimeType));
         }
         
-        return function staticFile(path, mime) {
-            return function(req, res) { handler(path, mime, req, res); }; 
+        return function staticFile(localPath, mime) {
+            return function(req, res) { handler(localPath, mime, req, res); }; 
         };
     })();
     
-    function staticDir(fileDir, mimeLookup) {
+    function staticDir(requestedDir, mimeLookup) {
+        var fileDir = path.resolve(requestedDir);
         for(var key in mimeLookup) {
             if(key.charAt(0) !== ".") {
                 console.warn("Extension found without a leading periond ('.'): '" + key + "'");
@@ -82,7 +83,7 @@
                 return default404(req, res);
             }
 
-            if(path.relative(fileDir, filePath).indexOf("..") !== -1) {
+            if (path.resolve(filePath).indexOf(fileDir) !== 0){
                 console.error("Attempted access to parent directory -- root: " + fileDir + "; subdir: " + filePath);
                 return default404(req, res);
             }
@@ -122,10 +123,10 @@
         res.end(body);
     }
     
-    function findPattern(patterns, path) {
+    function findPattern(patterns, filePath) {
         for(var i = 0, l = patterns.length; i < l; i++) {
-            if(patterns[i].regex.test(path)) {
-                return { handler: patterns[i].handler, extra: patterns[i].regex.exec(path).slice(1) };
+            if(patterns[i].regex.test(filePath)) {
+                return { handler: patterns[i].handler, extra: patterns[i].regex.exec(filePath).slice(1) };
             }
         }
         
@@ -169,8 +170,8 @@
         
         function handler(req, res) {
             try {
-                var path = url.parse(req.url).pathname;
-                var info = (urls[path] || findPattern(patterns, path) || findGeneric(generics, req) || missing);
+                var filePath = url.parse(req.url).pathname;
+                var info = (urls[filePath] || findPattern(patterns, filePath) || findGeneric(generics, req) || missing);
                 var handler = info.handler || info;
                 var extra = info.extra;
                 
