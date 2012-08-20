@@ -87,7 +87,7 @@
             var ext = path.extname(filePath).toLowerCase();
             
             if(!(ext in mimeLookup)) {
-                console.error("Could not find file: " + filePath);
+                console.error("Unknown file extension: " + filePath);
                 return default404(req, res);
             }
 
