@@ -5,7 +5,7 @@
     var crypto = require("crypto");
     
     var getBuffer = (function() {
-        var buffers = {};
+        var buffers = Object.create(null);
         
         function watchBuffer(filePath) {
             if(filePath in buffers) { return; }
