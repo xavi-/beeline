@@ -7,11 +7,11 @@
     var getBuffer = (function() {
         var buffers = {};
         
-        function watchBuffer(path) {
-            if(path in buffers) { return; }
+        function watchBuffer(filePath) {
+            if(filePath in buffers) { return; }
             
-            buffers[path] = null;
-            fs.watchFile(path, function() { buffers[path] = null; });
+            buffers[filePath] = null;
+            fs.watchFile(filePath, function() { buffers[filePath] = null; });
         }
         
         return function getBuffer(filePath, callback) {
@@ -65,16 +65,16 @@
     }
     
     var staticFile = (function() {
-        function handler(path, mimeType, req, res) {
-            getBuffer(path, sendBuffer(req, res, mimeType));
+        function handler(filePath, mimeType, req, res) {
+            getBuffer(filePath, sendBuffer(req, res, mimeType));
         }
         
-        return function staticFile(path, mime) {
-            return function(req, res) { handler(path, mime, req, res); }; 
+        return function staticFile(filePath, mime) {
+            return function(req, res) { handler(filePath, mime, req, res); };
         };
     })();
     
-    function staticDir(fileDir, mimeLookup) {
+    function staticDir(rootDir, mimeLookup) {
         for(var key in mimeLookup) {
             if(key.charAt(0) !== ".") {
                 console.warn("Extension found without a leading periond ('.'): '" + key + "'");
@@ -83,7 +83,7 @@
         
         return function(req, res, extra, matches) {
             matches = matches || extra;
-            var filePath = path.join.apply(path, [ fileDir ].concat(matches));
+            var filePath = path.join.apply(path, [ rootDir ].concat(matches));
             var ext = path.extname(filePath).toLowerCase();
             
             if(!(ext in mimeLookup)) {
@@ -91,8 +91,8 @@
                 return default404(req, res);
             }
 
-            if(path.relative(fileDir, filePath).indexOf("..") !== -1) {
-                console.error("Attempted access to parent directory -- root: " + fileDir + "; subdir: " + filePath);
+            if(path.relative(rootDir, filePath).indexOf("..") !== -1) {
+                console.error("Attempted access to parent directory -- root: " + rootDir + "; subdir: " + filePath);
                 return default404(req, res);
             }
             
@@ -131,10 +131,10 @@
         res.end(body);
     }
     
-    function findPattern(patterns, path) {
+    function findPattern(patterns, urlPath) {
         for(var i = 0, l = patterns.length; i < l; i++) {
-            if(patterns[i].regex.test(path)) {
-                return { handler: patterns[i].handler, extra: patterns[i].regex.exec(path).slice(1) };
+            if(patterns[i].regex.test(urlPath)) {
+                return { handler: patterns[i].handler, extra: patterns[i].regex.exec(urlPath).slice(1) };
             }
         }
         
@@ -178,8 +178,8 @@
         
         function handler(req, res) {
             try {
-                var path = url.parse(req.url).pathname;
-                var info = (urls[path] || findPattern(patterns, path) || findGeneric(generics, req) || missing);
+                var urlPath = url.parse(req.url).pathname;
+                var info = (urls[urlPath] || findPattern(patterns, urlPath) || findGeneric(generics, req) || missing);
                 var handler = info.handler || info;
                 var extra = info.extra;
                 
