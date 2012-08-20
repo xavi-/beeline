@@ -17,8 +17,12 @@
         return function getBuffer(filePath, callback) {
             if(buffers[filePath]) { return callback(null, buffers[filePath]); }
             
-            fs.exists(filePath, function(exists) {
-                if(!exists) { return callback({ "file-not-found": true, path: filePath }, null); }
+            fs.stat(filePath, function(err, stats) {
+                if(err && err.code == "ENOENT") { return callback({ "file-not-found": true, path: filePath }, null); }
+
+                if(err) { return callback(err, null); }
+
+                if(!stats.isFile()) { return callback({ "not-a-file": true, path: filePath }, null); }
                 
                 fs.readFile(filePath, function(err, data) {
                     if(err) { return callback(err, null); }
@@ -33,12 +37,17 @@
     
     function sendBuffer(req, res, mimeType) {
         return function(err, buffer) {
-            if(err && err["file-not-found"]) {
-                console.error("Could not find file: " + err.path);
-                return default404(req, res);
+            if(err) {
+                if(err["file-not-found"]) {
+                    console.error("Could not find file: " + err.path);
+                    return default404(req, res);
+                } else if(err["not-a-file"]) {
+                    console.error("Not a file: " + err.path);
+                    return default404(req, res);
+                }
+
+                throw err;
             }
-            
-            if(err) { throw err; }
             
             res.removeHeader("Set-Cookie");
             res.setHeader("Cache-Control", "private, max-age=31536000");
