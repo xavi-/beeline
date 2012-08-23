@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/xavi-/beeline.png)](http://travis-ci.org/xavi-/beeline)
 # Beeline
 
 A laughably simplistic router for node.js
