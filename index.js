@@ -3,19 +3,20 @@
     var fs = require("fs");
     var path = require("path");
     var crypto = require("crypto");
+    var lru = require("lru-cache");
     
     var getBuffer = (function() {
-        var buffers = Object.create(null);
+        var buffers = lru({ max: 1024 * 500, length: function(n) { return n.length; } });
         
         function watchBuffer(filePath) {
-            if(filePath in buffers) { return; }
+            if(buffers.has(filePath)) { return; }
             
-            buffers[filePath] = null;
-            fs.watchFile(filePath, function() { buffers[filePath] = null; });
+            buffers.del(filePath);
+            fs.watchFile(filePath, function() { buffers.del(filePath); });
         }
         
         return function getBuffer(filePath, callback) {
-            if(buffers[filePath]) { return callback(null, buffers[filePath]); }
+            if(buffers.has(filePath)) { return callback(null, buffers.get(filePath)); }
             
             fs.stat(filePath, function(err, stats) {
                 if(err && err.code == "ENOENT") { return callback({ "file-not-found": true, path: filePath }, null); }
@@ -28,8 +29,8 @@
                     if(err) { return callback(err, null); }
                     
                     watchBuffer(filePath);
-                    buffers[filePath] = { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") };
-                    callback(null, buffers[filePath]);
+                    buffers.set(filePath, { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") });
+                    callback(null, buffers.get(filePath));
                 });
             });
         };
