@@ -55,7 +55,7 @@ var router = bee.route({ // Create a new router
     "`500`": function(req, res, err) {
         // Called when an exception is thrown by another router function
         // The error that caused the exception is passed as the third parameter
-        // This _not_ guarranteed to catch all exceptions
+        // This _not_ guaranteed to catch all exceptions
         //
         // This handler can later be called explicitly with router.error
     }
@@ -82,10 +82,10 @@ router.add({ // Use `.add` to append new rules to a router
     },
     "`405`": function(req, res) {
         // Called when when a URL is specified but no corresponding method (aka verb) matches
-        // For example, this handler would be executed if the "any" catch all wasn't spefied
+        // For example, this handler would be executed if the "any" catch all wasn't specified
         // in the handler above and req.method === "HEAD"
         //
-        // This handler can later be calld explicitly with router.missingVerb
+        // This handler can later be called explicitly with router.missingVerb
     },
     "/explicit-calls": function(req, res) { // If necessary you can reroute requests
         if(url.parse(req.url).query["item-name"] === "unknown") {
@@ -153,7 +153,7 @@ The `beeline` library contains the following three methods:
 In the event that a request matches two rules, the following precedence rules are considered:
 
 - Fully defined rules take highest precedence.  In other words, `"/index"` has a higher precedences then ``"r`^/index$`"`` even though semantically both rules are exactly the same.
-- Tokens and RegExp rules have the same precednce
+- Tokens and RegExp rules have the same precedence
 - RegExp rules take higher precedence than `404`
 - `404` and `405` have the lowest precedences
 - The `500` rules is outside the precedence rules.  It can potentially be triggered at any time.
