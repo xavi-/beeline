@@ -36,7 +36,7 @@
         };
     })();
     
-    function sendBuffer(req, res, mimeType) {
+    function sendBuffer(req, res, mimeType, maxAge) {
         return function(err, buffer) {
             if(err) {
                 if(err["file-not-found"]) {
@@ -49,9 +49,13 @@
 
                 throw err;
             }
-            
+
+            if(maxAge === undefined){
+                maxAge = 31536000;
+            }
+
             res.removeHeader("Set-Cookie");
-            res.setHeader("Cache-Control", "private, max-age=31536000");
+            res.setHeader("Cache-Control", 'private, max-age=' + maxAge);
             res.setHeader("ETag", buffer.sum);
             
             if(req.headers["if-none-match"] === buffer.sum) {
@@ -66,12 +70,12 @@
     }
     
     var staticFile = (function() {
-        function handler(filePath, mimeType, req, res) {
-            getBuffer(filePath, sendBuffer(req, res, mimeType));
+        function handler(filePath, mimeType, req, res, maxAge) {
+            getBuffer(filePath, sendBuffer(req, res, mimeType, maxAge));
         }
         
-        return function staticFile(filePath, mime) {
-            return function(req, res) { handler(filePath, mime, req, res); };
+        return function staticFile(filePath, mime, maxAge) {
+            return function(req, res) { handler(filePath, mime, req, res, maxAge); };
         };
     })();
     
@@ -82,7 +86,7 @@
             }
         }
         
-        return function(req, res, extra, matches) {
+        return function(req, res, extra, matches, maxAge) {
             matches = matches || extra;
             var filePath = path.join.apply(path, [ rootDir ].concat(matches));
             var ext = path.extname(filePath).toLowerCase();
@@ -97,7 +101,7 @@
                 return default404(req, res);
             }
             
-            getBuffer(filePath, sendBuffer(req, res, mimeLookup[ext]));
+            getBuffer(filePath, sendBuffer(req, res, mimeLookup[ext], maxAge));
         };
     }
     
