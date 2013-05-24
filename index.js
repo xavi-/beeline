@@ -79,14 +79,14 @@
         };
     })();
     
-    function staticDir(rootDir, mimeLookup) {
+    function staticDir(rootDir, mimeLookup, maxAge) {
         for(var key in mimeLookup) {
             if(key.charAt(0) !== ".") {
                 console.warn("Extension found without a leading periond ('.'): '" + key + "'");
             }
         }
         
-        return function(req, res, extra, matches, maxAge) {
+        return function(req, res, extra, matches) {
             matches = matches || extra;
             var filePath = path.join.apply(path, [ rootDir ].concat(matches));
             var ext = path.extname(filePath).toLowerCase();
