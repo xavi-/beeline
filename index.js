@@ -55,7 +55,7 @@
             }
 
             res.removeHeader("Set-Cookie");
-            res.setHeader("Cache-Control", 'private, max-age=' + maxAge);
+            res.setHeader("Cache-Control", "private, max-age=" + maxAge);
             res.setHeader("ETag", buffer.sum);
             
             if(req.headers["if-none-match"] === buffer.sum) {
