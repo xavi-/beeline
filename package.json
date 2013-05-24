@@ -9,6 +9,9 @@
     "request handler",
     "middleware"
   ],
+  "scripts": {
+    "test": "node test/staticFileTests.js"
+  },
   "maintainers": [
     {
       "name": "Xavi",
@@ -23,6 +26,9 @@
   },
   "engines": {
     "node": ">= 0.3.1"
+  },
+  "devDependencies" : {
+    "tape" : ">=1.0.1"
   },
   "dependencies": {
     "lru-cache": "~2.3.0"
