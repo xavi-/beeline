@@ -50,9 +50,7 @@
                 throw err;
             }
 
-            if(maxAge === undefined){
-                maxAge = 31536000;
-            }
+            maxAge = maxAge || 31536000;
 
             res.removeHeader("Set-Cookie");
             res.setHeader("Cache-Control", "private, max-age=" + maxAge);
