@@ -35,7 +35,8 @@ var router = bee.route({ // Create a new router
         //   and values === [ "pictures/actors/smith/will.jpg" ]
     },
     "/`user`/static/`path...`": function(req, res, tokens, values) {
-        // Called when req.url contains at least three parts, the second of which is "static"
+        // Called when req.url contains at least three parts, the second of which
+        // is "static".
         // The parameter tokens is an object that maps token names and value
         // For example if req.url === "/da-oozer/static/pictures/venkman.jpg"
         //   then tokens === { "user": "da-oozer", "path": "pictures/venkman.jpg" }
@@ -77,32 +78,38 @@ router.add({ // Use `.add` to append new rules to a router
             // Called when req.url === "/my-method" and req.method === "POST"
         },
         "any": function(req, res) {
-            // Called when req.url === "/my-method" and req.method is not "GET" or "POST"
+            // Called when req.url === "/my-method" and req.method is not
+            // "GET" or "POST"
         }
     },
     "`405`": function(req, res) {
-        // Called when when a URL is specified but no corresponding method (aka verb) matches
-        // For example, this handler would be executed if the "any" catch all wasn't specified
-        // in the handler above and req.method === "HEAD"
+        // Called when when a URL is specified but no corresponding method (aka verb)
+        // matches.  For example, this handler would be executed if the "any" catch
+        // all wasn't specified in the handler above and req.method === "HEAD"
         //
         // This handler can later be called explicitly with router.missingVerb
     },
     "/explicit-calls": function(req, res) { // If necessary you can reroute requests
         if(url.parse(req.url).query["item-name"] === "unknown") {
-            return router.missing(req, res, this); // Calls the 404 (aka missing) handler
-            // The last parameter is optional.  It sets the this pointer in the 404 handler.
+            // Calls the 404 (aka missing) handler:
+            return router.missing(req, res, this);
+            // The last parameter is optional.  It sets the this pointer in the
+            // 404 handler.
         }
         
         if(url.parse(req.url).query["item-name"] === "an-error") {
-            return router.error(req, res, err, this); // Calls the 500 (aka error) handler
-            // The last parameter is optional.  It sets the this pointer in the 500 handler.
+            // Calls the 500 (aka error) handler:
+            return router.error(req, res, err, this);
+            // The last parameter is optional.  It sets the this pointer in the
+            // 500 handler.
         }
         
         // Do normal request handling
     }
 });
 
-require("http").createServer(router).listen(8001); // Starts serve with routes defined above
+// Starts serve with routes defined above:
+require("http").createServer(router).listen(8001);
 ```
 
 See `test/test.js` for a working example.
