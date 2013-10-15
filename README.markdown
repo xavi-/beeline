@@ -148,6 +148,25 @@ The `beeline` library contains the following three methods:
     });
     ```
 
+Beeline is also at least somewhat compatibile with [expressjs](https://github.com/visionmedia/express).  Here's an example:
+
+```javascript
+app.use(beeline.route({
+    "/": function(req, res, next) {
+        fs.readFile("./templates/index.html", function(err, data) {
+            if(err) { throw err; }
+
+            res.html(data);
+        });
+    },
+    "/`user`/static/`path...`": function(req, res, tokens, values, next) {
+        /* ... code ... */
+    }
+}));
+```
+
+Note the `next` callback is always passed as the last parameter.
+
 ### Precedence Rules
 
 In the event that a request matches two rules, the following precedence rules are considered:
