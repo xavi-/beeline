@@ -110,21 +110,27 @@ function staticDir(rootDir, mimeLookup, maxAge) {
 	};
 }
 
-function default404(req, res) {
+function default404(req, res, next) {
+	if(next) { return next(); }
+
 	var body = "404'd";
 	res.writeHead(404, { "Content-Length": body.length, "Content-Type": "text/plain" });
 	res.end(body);
 
 	console.log("Someone 404'd: " + req.url);
 }
-function default405(req, res) {
+function default405(req, res, next) {
+	if(next) { return next(); }
+
 	var body = "405'd";
 	res.writeHead(405, { "Content-Length": body.length, "Content-Type": "text/plain" });
 	res.end(body);
 
 	console.log("Someone 405'd -- url: " + req.url + "; verb: " + req.method);
 }
-function default500(req, res, err) {
+function default500(req, res, err, next) {
+	if(next) { return next(err); }
+
 	console.error("Error accessing: " + req.method + " " + req.url);
 	console.error(err.message);
 	console.error(err.stack);
@@ -161,12 +167,12 @@ function findGeneric(generics, req) {
 
 var rRegExUrl = /^r`(.*)`$/, rToken = /`(.*?)(\.\.\.)?`/g;
 function createTokenHandler(names, handler) {
-	return function(req, res, vals) {
+	return function(req, res, vals, next) {
 		var extra = Object.create(null);
 		for(var i = 0; i < names.length; i++) {
 			extra[names[i]] = vals[i];
 		}
-		executeHandler(handler, this, req, res, extra, vals);
+		executeHandler(handler, this, req, res, { extra: extra, vals: vals, next: next });
 	};
 }
 function parseToken(rule, handler) {
@@ -179,14 +185,26 @@ function parseToken(rule, handler) {
 	return { regex: rRule, handler: createTokenHandler(tokens, handler) };
 }
 
-function executeHandler(handler, thisp, req, res, extra, vals) {
-	(handler[req.method] || handler.any || handler).call(thisp, req, res, extra, vals);
+function executeHandler(handler, thisp, req, res, opts) {
+	handler = (handler[req.method] || handler.any || handler);
+
+	var extra = opts.extra, vals = opts.vals, next = opts.next;
+
+	if(next) {
+		if(extra && vals) { handler.call(thisp, req, res, extra, vals, next); }
+		else if(extra) { handler.call(thisp, req, res, extra, next); }
+		else { handler.call(thisp, req, res, next); }
+	} else {
+		if(extra && vals) { handler.call(thisp, req, res, extra, vals); }
+		else if(extra) { handler.call(thisp, req, res, extra); }
+		else { handler.call(thisp, req, res); }
+	}
 }
 function route(routes) {
 	var preprocess = [], urls = {}, patterns = [], generics = [];
 	var missing = default404, missingVerb = default405, error = default500;
 
-	function handler(req, res) {
+	function handler(req, res, next) {
 		try {
 			var urlPath = url.parse(req.url).pathname;
 			var info = (
@@ -200,9 +218,9 @@ function route(routes) {
 
 			preprocess.forEach(function(process) { process(req, res); });
 
-			executeHandler(handler, this, req, res, extra);
+			executeHandler(handler, this, req, res, { extra: extra, next: next });
 		} catch(err) {
-			error.call(this, req, res, err);
+			error.call(this, req, res, err, next);
 		}
 	}
 	handler.add = function(routes) {

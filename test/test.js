@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 51,
+    expected: 61,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -348,6 +348,74 @@ staticDir({ url: "/attempt-to-insecurely-access-parent-directory" }, { // Mock r
         tests.finished();
     }
 }, [ "..", "..", "ok.json" ]);
+
+// Testing express compatibility
+var router4 = bee.route({
+    "/throw-error": function(req, res, next) { throw Error("500 should catch"); }
+});
+router4({ url: "/unknown-url" }, {}, function next() {
+    tests.finished();
+});
+router4({ url: "/throw-error" }, {}, function next(err) {
+    assert.equal(err.message, "500 should catch");
+    tests.finished();
+});
+
+var daNext = function() {};
+router4.add({
+    "/test": function(req, res, next) {
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
+    "/names/`last-name`/`first-name`": function(req, res, tokens, vals, next) {
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
+    "/static/`path...`": function(req, res, tokens, vals, next) {
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
+    "/`user`/static/`path...`": function(req, res, tokens, vals, next) {
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
+    "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches, next) {
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
+    "`generics`": [ {
+        test: function(req) { return req.triggerGeneric; },
+        handler: function(req, res, next) {
+            assert.strictEqual(next, daNext);
+            tests.finished();
+        }
+    } ],
+    "`404`": function(req, res, next) {
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
+    "`500`": function(req, res, err, next) {
+        try { assert.equal(req.url, "/throw-error"); }
+        catch(e) {
+            console.error(e.stack);
+            console.error("Caused by:");
+            console.error(err.stack);
+            process.exit();
+        }
+
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    }
+});
+
+router4({ url: "/test?param=1&woo=2" }, {}, daNext);
+router4({ url: "/throw-error" }, {}, daNext);
+router4({ url: "/names/smith/will" }, {}, daNext);
+router4({ url: "/actors/smith/will" }, {}, daNext);
+router4({ url: "/da-oozer/static/pictures/venkman.jpg" }, {}, daNext);
+router4({ url: "/static/pictures/actors/smith/will.jpg" }, {}, daNext);
+router4({ url: "/random", triggerGeneric: true }, {}, daNext);
+router4({ url: "/url-not-found" }, {}, daNext);
 
 process.on("exit", function() {
     assert.equal(tests.executed, tests.expected);
