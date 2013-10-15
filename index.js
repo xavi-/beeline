@@ -18,17 +18,24 @@ var getBuffer = (function() {
 		if(buffers.has(filePath)) { return callback(null, buffers.get(filePath)); }
 
 		fs.stat(filePath, function(err, stats) {
-			if(err && err.code == "ENOENT") { return callback({ "file-not-found": true, path: filePath }, null); }
+			if(err && err.code == "ENOENT") {
+				return callback({ "file-not-found": true, path: filePath }, null);
+			}
 
 			if(err) { return callback(err, null); }
 
-			if(!stats.isFile()) { return callback({ "not-a-file": true, path: filePath }, null); }
+			if(!stats.isFile()) {
+				return callback({ "not-a-file": true, path: filePath }, null);
+			}
 
 			fs.readFile(filePath, function(err, data) {
 				if(err) { return callback(err, null); }
 
 				watchBuffer(filePath);
-				buffers.set(filePath, { data: data, sum: crypto.createHash("sha1").update(data).digest("hex") });
+				buffers.set(filePath, {
+					data: data,
+					sum: crypto.createHash("sha1").update(data).digest("hex")
+				});
 				callback(null, buffers.get(filePath));
 			});
 		});
@@ -59,8 +66,7 @@ function sendBuffer(req, res, mimeType, maxAge) {
 			res.writeHead(304);
 			return res.end();
 		} else {
-			res.writeHead(200, { "Content-Length": buffer.data.length,
-								 "Content-Type": mimeType });
+			res.writeHead(200, { "Content-Length": buffer.data.length, "Content-Type": mimeType });
 			return res.end(buffer.data, "binary");
 		}
 	};
@@ -94,7 +100,9 @@ function staticDir(rootDir, mimeLookup, maxAge) {
 		}
 
 		if(path.relative(rootDir, filePath).indexOf("..") !== -1) {
-			console.error("Attempted access to parent directory -- root: " + rootDir + "; subdir: " + filePath);
+			console.error(
+				"Attempted access to parent directory -- root: " + rootDir + "; subdir: " + filePath
+			);
 			return default404(req, res);
 		}
 
@@ -104,16 +112,14 @@ function staticDir(rootDir, mimeLookup, maxAge) {
 
 function default404(req, res) {
 	var body = "404'd";
-	res.writeHead(404, { "Content-Length": body.length,
-						 "Content-Type": "text/plain" });
+	res.writeHead(404, { "Content-Length": body.length, "Content-Type": "text/plain" });
 	res.end(body);
 
 	console.log("Someone 404'd: " + req.url);
 }
 function default405(req, res) {
 	var body = "405'd";
-	res.writeHead(405, { "Content-Length": body.length,
-						 "Content-Type": "text/plain" });
+	res.writeHead(405, { "Content-Length": body.length, "Content-Type": "text/plain" });
 	res.end(body);
 
 	console.log("Someone 405'd -- url: " + req.url + "; verb: " + req.method);
@@ -128,15 +134,17 @@ function default500(req, res, err) {
 	body.push("Exception: " + err.message);
 	body.push(err.stack);
 	body = body.join("\n");
-	res.writeHead(500, { "Content-Length": body.length,
-						 "Content-Type": "text/plain" });
+	res.writeHead(500, { "Content-Length": body.length, "Content-Type": "text/plain" });
 	res.end(body);
 }
 
 function findPattern(patterns, urlPath) {
 	for(var i = 0, l = patterns.length; i < l; i++) {
 		if(patterns[i].regex.test(urlPath)) {
-			return { handler: patterns[i].handler, extra: patterns[i].regex.exec(urlPath).slice(1) };
+			return {
+				handler: patterns[i].handler,
+				extra: patterns[i].regex.exec(urlPath).slice(1)
+			};
 		}
 	}
 
@@ -181,7 +189,12 @@ function route(routes) {
 	function handler(req, res) {
 		try {
 			var urlPath = url.parse(req.url).pathname;
-			var info = (urls[urlPath] || findPattern(patterns, urlPath) || findGeneric(generics, req) || missing);
+			var info = (
+				urls[urlPath] ||
+				findPattern(patterns, urlPath) ||
+				findGeneric(generics, req) ||
+				missing
+			);
 			var handler = info.handler || info;
 			var extra = info.extra;
 
@@ -213,8 +226,12 @@ function route(routes) {
 				} else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
 					if(missing !== default404) { console.warn("Duplicate beeline rule: " + rule); }
 					missing = handler;
-				} else if(rule === "`405`" || rule === "`missing-verb`" || rule === "`missingVerb`") {
-					if(missingVerb !== default405) { console.warn("Duplicate beeline rule: " + rule); }
+				} else if(
+					rule === "`405`" || rule === "`missing-verb`" || rule === "`missingVerb`"
+				) {
+					if(missingVerb !== default405) {
+						console.warn("Duplicate beeline rule: " + rule);
+					}
 					missingVerb = handler;
 				} else if(rule === "`500`" || rule === "`error`") {
 					if(error !== default500) { console.warn("Duplicate beeline rule: " + rule); }
@@ -223,13 +240,17 @@ function route(routes) {
 					Array.prototype.push.apply(generics, handler);
 				} else if(rRegExUrl.test(rule)) {
 					var rRule = new RegExp(rRegExUrl.exec(rule)[1]);
-					if(patterns.some(function(p) { return p.regex.toString() === rRule.toString(); })) {
+					var cmpRegEx = function(p) { return p.regex.toString() === rRule.toString(); };
+					if(patterns.some(cmpRegEx)) {
 						console.warn("Duplicate beeline rule: " + rule);
 					}
 					patterns.push({ regex: rRule, handler: handler });
 				} else if(rToken.test(rule)) {
 					var pattern = parseToken(rule, handler);
-					if(patterns.some(function(p) { return p.regex.toString() === pattern.regex.toString(); })) {
+					var cmpPattern = function(p) {
+						return p.regex.toString() === pattern.regex.toString();
+					};
+					if(patterns.some(cmpPattern)) {
 						console.warn("Duplicate beeline rule: " + rule);
 					}
 					patterns.push(pattern);
