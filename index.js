@@ -138,7 +138,6 @@ function default500(req, res, err, next) {
 	var body = [ "500'd" ];
 	body.push("An exception was thrown while accessing: " + req.method + " " + req.url);
 	body.push("Exception: " + err.message);
-	body.push(err.stack);
 	body = body.join("\n");
 	res.writeHead(500, { "Content-Length": body.length, "Content-Type": "text/plain" });
 	res.end(body);
