@@ -203,7 +203,7 @@ function executeHandler(handler, thisp, req, res, opts) {
 	}
 }
 function route(routes) {
-	var preprocess = [], urls = {}, patterns = [], generics = [];
+	var preprocess = [], urls = Object.create(null), patterns = [], generics = [];
 	var missing = default404, missingVerb = default405, error = default500;
 
 	function handler(req, res, next) {
