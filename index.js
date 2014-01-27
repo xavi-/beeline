@@ -187,6 +187,7 @@ function parseToken(rule, handler) {
 	return { regex: rRule, handler: createTokenHandler(tokens, handler) };
 }
 
+
 function executeHandler(handler, thisp, req, res, opts) {
 	handler = (handler[req.method] || handler.any || handler);
 
@@ -201,6 +202,20 @@ function executeHandler(handler, thisp, req, res, opts) {
 		else if(extra) { handler.call(thisp, req, res, extra); }
 		else { handler.call(thisp, req, res); }
 	}
+}
+function expandHandler(handler) {
+	if(handler.test) { // For `generic` type handlers
+		handler.handler = expandHandler(handler.handler);
+		return handler;
+	}
+
+	for(key in handler) {
+		key.split(/\s+/).forEach(function(method) {
+			handler[method] = handler[key];
+		});
+	}
+
+	return handler;
 }
 function route(routes) {
 	var preprocess = [], urls = Object.create(null), patterns = [], generics = [];
@@ -242,31 +257,31 @@ function route(routes) {
 			key.split(/\s+/).forEach(function(rule) {
 				if(rule.indexOf("`") === -1) {
 					if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
-					urls[rule] = handler;
+					urls[rule] = expandHandler(handler);
 				} else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
 					if(missing !== default404) { console.warn("Duplicate beeline rule: " + rule); }
-					missing = handler;
+					missing = expandHandler(handler);
 				} else if(
 					rule === "`405`" || rule === "`missing-verb`" || rule === "`missingVerb`"
 				) {
 					if(missingVerb !== default405) {
 						console.warn("Duplicate beeline rule: " + rule);
 					}
-					missingVerb = handler;
+					missingVerb = expandHandler(handler);
 				} else if(rule === "`500`" || rule === "`error`") {
 					if(error !== default500) { console.warn("Duplicate beeline rule: " + rule); }
-					error = handler;
+					error = expandHandler(handler);
 				} else if(rule === "`generics`") {
-					Array.prototype.push.apply(generics, handler);
+					Array.prototype.push.apply(generics, handler.map(expandHandler));
 				} else if(rRegExUrl.test(rule)) {
 					var rRule = new RegExp(rRegExUrl.exec(rule)[1]);
 					var cmpRegEx = function(p) { return p.regex.toString() === rRule.toString(); };
 					if(patterns.some(cmpRegEx)) {
 						console.warn("Duplicate beeline rule: " + rule);
 					}
-					patterns.push({ regex: rRule, handler: handler });
+					patterns.push({ regex: rRule, handler: expandHandler(handler) });
 				} else if(rToken.test(rule)) {
-					var pattern = parseToken(rule, handler);
+					var pattern = parseToken(rule, expandHandler(handler));
 					var cmpPattern = function(p) {
 						return p.regex.toString() === pattern.regex.toString();
 					};
