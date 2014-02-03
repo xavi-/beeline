@@ -81,7 +81,12 @@ router({ url: "/url-not-found" });
 
 router.add({ 
     "/ /home r`^/index(.php|.html|.xhtml)?$`": function(req, res) {
-        assert.ok(req.url === "/" || req.url === "/index" || req.url === "/index.php" || req.url === "/home");
+        assert.ok(
+            req.url === "/" ||
+            req.url === "/index" ||
+            req.url === "/index.php" ||
+            req.url === "/home"
+        );
         tests.finished();
     }
 });
@@ -94,7 +99,9 @@ router.add({
     "/method-test": {
         "GET": function(req, res) { assert.equal(req.method, "GET"); tests.finished(); },
         "POST": function(req, res) { assert.equal(req.method, "POST"); tests.finished(); },
-        "any": function(req, res) { assert.ok(req.method !== "GET" || req.method !== "POST"); tests.finished(); }
+        "any": function(req, res) {
+            assert.ok(req.method !== "GET" || req.method !== "POST"); tests.finished();
+        }
     },
     "/`user`/profile/`path...`": {
         "POST PUT": function(req, res, tokens, vals) {
@@ -256,7 +263,9 @@ static404({ url: "/load-non-existent-static-file" }, { // Mock response
     }
 });
 
-var staticDir = bee.staticDir("../", { ".json": "application/json", "js": "application/x-javascript" });
+var staticDir = bee.staticDir("../", {
+    ".json": "application/json", "js": "application/x-javascript"
+});
 assert.ok(warnings["Extension found without a leading periond ('.'): 'js'"]);
 fs.readFile("../package.json", function(err, data) {
     if(err) { throw err; }
@@ -264,7 +273,8 @@ fs.readFile("../package.json", function(err, data) {
     var sum = crypto.createHash("sha1").update(data).digest("hex");
     
     var isHeadWritten = false, setHeaders = {};
-    staticDir({ headers: {}, url: "/load-existing-file-from-static-dir" }, { // Mock response of an empty cache
+    staticDir({ headers: {}, url: "/load-existing-file-from-static-dir" }, {
+        // Mock response of an empty cache
         setHeader: function(type, val) {
             setHeaders[type] = val;
         },
@@ -295,7 +305,8 @@ fs.readFile("../package.json", function(err, data) {
     var sum = crypto.createHash("sha1").update(data).digest("hex");
 
     var isHeadWritten = false, setHeaders = {};
-    staticDir({ headers: { "if-none-match": sum }, url: "/do-304s-work" }, { // Mock cached response
+    staticDir({ headers: { "if-none-match": sum }, url: "/do-304s-work" }, {
+        // Mock cached response
         setHeader: function(type, val) {
             setHeaders[type] = val;
         },
