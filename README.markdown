@@ -74,8 +74,10 @@ router.add({ // Use `.add` to append new rules to a router
         "GET": function(req, res) {
             // Called when req.url === "/my-method" and req.method === "GET"
         },
-        "POST": function(req, res) {
-            // Called when req.url === "/my-method" and req.method === "POST"
+        "POST PUT": function(req, res) {
+            // Called when req.url === "/my-method" and
+            //  req.method === "POST" or req.method === "PUT"
+            // Methods can be combined with a space like URL rules.
         },
         "any": function(req, res) {
             // Called when req.url === "/my-method" and req.method is not
