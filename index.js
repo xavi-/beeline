@@ -172,7 +172,7 @@ function createTokenHandler(names, handler) {
 	return function(req, res, vals, next) {
 		var extra = Object.create(null);
 		for(var i = 0; i < names.length; i++) {
-			extra[names[i]] = vals[i];
+			extra[names[i]] = decodeURIComponent(vals[i]);
 		}
 		executeHandler(handler, this, req, res, { extra: extra, vals: vals, next: next });
 	};

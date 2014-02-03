@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 62,
+    expected: 63,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -34,6 +34,12 @@ var router = bee.route({
         assert.equal(tokens["path"], "pictures/venkman.jpg");
         assert.equal(vals[0], "da-oozer");
         assert.equal(vals[1], "pictures/venkman.jpg");
+        tests.finished();
+    },
+    "/`user`/profile": function(req, res, tokens, vals) { // Ensure tokens are decoded but not vals
+        assert.equal(req.url, "/%E2%88%91%C3%A9%C3%B1/profile");
+        assert.equal(tokens["user"], "∑éñ");
+        assert.equal("%E2%88%91%C3%A9%C3%B1", vals[0]);
         tests.finished();
     },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
@@ -68,6 +74,7 @@ router({ url: "/throw-error" });
 router({ url: "/names/smith/will" });
 router({ url: "/actors/smith/will" });
 router({ url: "/da-oozer/static/pictures/venkman.jpg" });
+router({ url: "/%E2%88%91%C3%A9%C3%B1/profile" });
 router({ url: "/static/pictures/actors/smith/will.jpg" });
 router({ url: "/random", triggerGeneric: true });
 router({ url: "/url-not-found" });
