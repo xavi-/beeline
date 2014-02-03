@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 61,
+    expected: 62,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -90,8 +90,8 @@ router.add({
         "any": function(req, res) { assert.ok(req.method !== "GET" || req.method !== "POST"); tests.finished(); }
     },
     "/`user`/profile/`path...`": {
-        "POST": function(req, res, tokens, vals) {
-            assert.equal(req.method, "POST");
+        "POST PUT": function(req, res, tokens, vals) {
+            assert.ok(req.method === "POST" || req.method === "PUT");
             assert.equal(req.url, "/dozer/profile/timeline/2010/holloween");
             assert.equal(tokens["user"], "dozer");
             assert.equal(tokens["path"], "timeline/2010/holloween");
@@ -110,6 +110,7 @@ router({ url: "/method-test", method: "GET" });
 router({ url: "/method-test", method: "POST" });
 router({ url: "/method-test", method: "HEAD" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "POST" });
+router({ url: "/dozer/profile/timeline/2010/holloween", method: "PUT" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "GET" });
 
 // Testing preprocessors
