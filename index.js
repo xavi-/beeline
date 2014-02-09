@@ -193,6 +193,8 @@ function executeHandler(handler, thisp, req, res, opts) {
 
 	var extra = opts.extra, vals = opts.vals, next = opts.next;
 
+	if(extra && vals) { req.params = extra; }
+
 	if(next) {
 		if(extra && vals) { handler.call(thisp, req, res, extra, vals, next); }
 		else if(extra) { handler.call(thisp, req, res, extra, next); }

@@ -25,6 +25,7 @@ var router = bee.route({ // Create a new router
         // For example if req.url === "/names/smith/will"
         //   then tokens ===  { "first-name": "will", "last-name": "smith" }
         //   and values === [ "will", "smith" ]
+        //   also req.params === tokens
     },
     "/static/`path...`": function(req, res, tokens, values) {
         // Called when req.url starts with "/static/"
@@ -33,6 +34,7 @@ var router = bee.route({ // Create a new router
         // For example if req.url === "/static/pictures/actors/smith/will.jpg"
         //   then tokens === { "path": "pictures/actors/smith/will.jpg" }
         //   and values === [ "pictures/actors/smith/will.jpg" ]
+        //   also req.params === tokens
     },
     "/`user`/static/`path...`": function(req, res, tokens, values) {
         // Called when req.url contains at least three parts, the second of which

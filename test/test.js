@@ -16,6 +16,7 @@ var router = bee.route({
     "/throw-error": function(req, res) { throw Error("500 should catch"); },
     "/names/`last-name`/`first-name`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/names/smith/will");
+        assert.equal(tokens, req.params)
         assert.equal(tokens["first-name"], "will");
         assert.equal(tokens["last-name"], "smith");
         assert.equal(vals[0], "smith");
@@ -30,6 +31,7 @@ var router = bee.route({
     },
     "/`user`/static/`path...`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/da-oozer/static/pictures/venkman.jpg");
+        assert.equal(tokens, req.params)
         assert.equal(tokens["user"], "da-oozer");
         assert.equal(tokens["path"], "pictures/venkman.jpg");
         assert.equal(vals[0], "da-oozer");
@@ -38,19 +40,24 @@ var router = bee.route({
     },
     "/`user`/profile": function(req, res, tokens, vals) { // Ensure tokens are decoded but not vals
         assert.equal(req.url, "/%E2%88%91%C3%A9%C3%B1/profile");
+        assert.equal(tokens, req.params)
         assert.equal(tokens["user"], "∑éñ");
         assert.equal("%E2%88%91%C3%A9%C3%B1", vals[0]);
         tests.finished();
     },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
         assert.equal(req.url, "/actors/smith/will");
+        assert.equal(req.params, undefined);
         assert.equal(matches[0], "smith");
         assert.equal(matches[1], "will");
         tests.finished();
     },
     "`generics`": [ {
             test: function(req) { return req.triggerGeneric; },
-            handler: function(req, res) { assert.ok(req.triggerGeneric); tests.finished(); }
+            handler: function(req, res) {
+                assert.equal(req.params, undefined);
+                assert.ok(req.triggerGeneric); tests.finished();
+            }
         }
     ],
     "`404`": function(req, res) {
