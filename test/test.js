@@ -106,11 +106,6 @@ router.add({
     "/`user`/profile/`path...`": {
         "POST PUT": function(req, res, tokens, vals) {
             assert.ok(req.method === "POST" || req.method === "PUT");
-            assert.equal(req.url, "/dozer/profile/timeline/2010/holloween");
-            assert.equal(tokens["user"], "dozer");
-            assert.equal(tokens["path"], "timeline/2010/holloween");
-            assert.equal(vals[0], "dozer");
-            assert.equal(vals[1], "timeline/2010/holloween");
             tests.finished();
         }
     },
