@@ -42,7 +42,7 @@ var router = bee.route({ // Create a new router
         // The parameter tokens is an object that maps token names and value
         // For example if req.url === "/da-oozer/static/pictures/venkman.jpg"
         //   then tokens === { "user": "da-oozer", "path": "pictures/venkman.jpg" }
-        //   and values === [ "da-oozer", pictures/venkman.jpg" ]
+        //   and values === [ "da-oozer", "pictures/venkman.jpg" ]
         //   also req.params === tokens
     },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
