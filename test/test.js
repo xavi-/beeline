@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 63,
+    expected: 64,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -45,6 +45,21 @@ var router = bee.route({
         assert.equal(vals[0], "%E2%88%91%C3%A9%C3%B1");
         tests.finished();
     },
+    "/`game`/`user-id:[a-z]{2}-(\\d{5})`/`post-id:\\d+`/`file...`": function(
+        req, res, tokens, vals
+    ) {
+        assert.equal(req.url, "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg");
+        assert.equal(tokens, req.params)
+        assert.equal(tokens["game"], "space-wars");
+        assert.equal(tokens["user-id"], "ab-12345");
+        assert.equal(tokens["post-id"], "1943");
+        assert.equal(tokens["file"], "pics/friends/will-smith.jpeg");
+        assert.equal(vals[0], "space-wars");
+        assert.equal(vals[1], "ab-12345");
+        assert.equal(vals[2], "1943");
+        assert.equal(vals[3], "pics/friends/will-smith.jpeg");
+        tests.finished();
+    },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
         assert.equal(req.url, "/actors/smith/will");
         assert.equal(req.params, undefined);
@@ -82,6 +97,7 @@ router({ url: "/names/smith/will" });
 router({ url: "/static/pictures/actors/smith/will.jpg" });
 router({ url: "/da-oozer/static/pictures/venkman.jpg" });
 router({ url: "/%E2%88%91%C3%A9%C3%B1/profile" });
+router({ url: "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg" });
 router({ url: "/actors/smith/will" });
 router({ url: "/random", triggerGeneric: true });
 router({ url: "/url-not-found" });

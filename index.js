@@ -167,21 +167,43 @@ function findGeneric(generics, req) {
 	return null;
 }
 
-var rRegExUrl = /^r`(.*)`$/, rToken = /`(.*?)(\.\.\.)?`/g;
-function createTokenHandler(names, handler) {
-	return function(req, res, vals, next) {
+var rRegExUrl = /^r`(.*)`$/, rToken = /`(.*?)(?:(?:\:\s*(.*?))|(\.\.\.)?)`/g;
+function createTokenHandler(tokens, handler) {
+	return function(req, res, oriVals, next) {
 		var extra = Object.create(null);
-		for(var i = 0; i < names.length; i++) {
-			extra[names[i]] = decodeURIComponent(vals[i]);
+		var newVals = new Array(tokens.length);
+		for(var i = 0; i < tokens.length; i++) {
+			var token = tokens[i];
+			extra[token.name] = decodeURIComponent(oriVals[token.captureIdx]);
+			newVals[i] = oriVals[token.captureIdx];
 		}
-		executeHandler(handler, this, req, res, { extra: extra, vals: vals, next: next });
+		executeHandler(handler, this, req, res, { extra: extra, vals: newVals, next: next });
 	};
 }
+var rHasFullCapture = /^\((?!\?[:!=]).*\)$/;
+function processEmbeddedRegex(regex) {
+	var rTest = new RegExp("|" + regex);
+	var numCaptures = rTest.exec("").length - 1;
+
+	if(numCaptures <= 0) { return { regex: "(" + regex + ")", numCaptures: 1 }; }
+
+	if(rHasFullCapture.test(regex)) { return { regex: regex, numCaptures: numCaptures }; }
+
+	return { regex: "(" + regex + ")", numCaptures: numCaptures + 1 };
+}
 function parseToken(rule, handler) {
-	var tokens = [];
-	var transform = rule.replace(rToken, function replaceToken(_, token, isExtend) {
-		tokens.push(token);
-		return (isExtend ? "(.*?)" : "([^/]*?)");
+	var tokens = [], captureIdx = 0;
+	var transform = rule.replace(rToken, function replaceToken(_, name, regex, isExtend) {
+		if(!regex) {
+			tokens.push({ name: name, captureIdx: captureIdx });
+			captureIdx += 1;
+		} else {
+			var info = processEmbeddedRegex(regex);
+			regex = info.regex;
+			tokens.push({ name: name, captureIdx: captureIdx });
+			captureIdx += info.numCaptures;
+		}
+		return regex || (isExtend ? "(.*?)" : "([^/]*?)");
 	});
 	var rRule = new RegExp("^" + transform + "$");
 	return { regex: rRule, handler: createTokenHandler(tokens, handler) };
