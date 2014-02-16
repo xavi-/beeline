@@ -182,6 +182,7 @@ function createTokenHandler(tokens, handler) {
 }
 var rHasFullCapture = /^\((?!\?[:!=]).*\)$/;
 function processEmbeddedRegex(regex) {
+	regex = regex.trim();
 	var rTest = new RegExp("|" + regex);
 	var numCaptures = rTest.exec("").length - 1;
 
@@ -241,6 +242,31 @@ function expandVerbs(handler) { // Expands "POST GET": handler to "POST": handle
 
 	return handler;
 }
+var rWhitespace = /[\x20\t\r\n\f]/;
+function splitRules(key) {
+	var rules = [];
+	var isQuoted = false, isPrevSpace = false;
+
+	var  ruleIdx = 0, curIdx = 0;
+	while(curIdx < key.length) {
+		var chr = key.charAt(curIdx);
+
+		if(chr === "`") { isQuoted = !isQuoted; curIdx += 1; continue; }
+		if(isQuoted) { curIdx += 1; continue; }
+		if(!rWhitespace.test(chr)) { curIdx += 1; continue; }
+
+		rules.push(key.substring(ruleIdx, curIdx));
+		do { // consume whitespace
+			curIdx += 1;
+			chr = key.charAt(curIdx);
+		} while(curIdx < key.length && rWhitespace.test(chr));
+		ruleIdx = curIdx;
+	}
+
+	if(ruleIdx !== curIdx) { rules.push(key.substring(ruleIdx)); }
+
+	return rules;
+}
 function route(routes) {
 	var preprocess = [], urls = Object.create(null), patterns = [], generics = [];
 	var missing = default404, missingVerb = default405, error = default500;
@@ -278,7 +304,7 @@ function route(routes) {
 				continue;
 			}
 
-			key.split(/\s+/).forEach(function(rule) {
+			splitRules(key).forEach(function(rule) {
 				if(rule.indexOf("`") === -1) {
 					if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
 					urls[rule] = expandVerbs(handler);
