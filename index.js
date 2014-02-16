@@ -205,9 +205,9 @@ function executeHandler(handler, thisp, req, res, opts) {
 		else { handler.call(thisp, req, res); }
 	}
 }
-function expandHandler(handler) {
+function expandVerbs(handler) { // Expands "POST GET": handler to "POST": handler, "GET": handler
 	if(handler.test) { // For `generic` type handlers
-		handler.handler = expandHandler(handler.handler);
+		handler.handler = expandVerbs(handler.handler);
 		return handler;
 	}
 
@@ -259,31 +259,31 @@ function route(routes) {
 			key.split(/\s+/).forEach(function(rule) {
 				if(rule.indexOf("`") === -1) {
 					if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
-					urls[rule] = expandHandler(handler);
+					urls[rule] = expandVerbs(handler);
 				} else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
 					if(missing !== default404) { console.warn("Duplicate beeline rule: " + rule); }
-					missing = expandHandler(handler);
+					missing = expandVerbs(handler);
 				} else if(
 					rule === "`405`" || rule === "`missing-verb`" || rule === "`missingVerb`"
 				) {
 					if(missingVerb !== default405) {
 						console.warn("Duplicate beeline rule: " + rule);
 					}
-					missingVerb = expandHandler(handler);
+					missingVerb = expandVerbs(handler);
 				} else if(rule === "`500`" || rule === "`error`") {
 					if(error !== default500) { console.warn("Duplicate beeline rule: " + rule); }
-					error = expandHandler(handler);
+					error = expandVerbs(handler);
 				} else if(rule === "`generics`") {
-					Array.prototype.push.apply(generics, handler.map(expandHandler));
+					Array.prototype.push.apply(generics, handler.map(expandVerbs));
 				} else if(rRegExUrl.test(rule)) {
 					var rRule = new RegExp(rRegExUrl.exec(rule)[1]);
 					var cmpRegEx = function(p) { return p.regex.toString() === rRule.toString(); };
 					if(patterns.some(cmpRegEx)) {
 						console.warn("Duplicate beeline rule: " + rule);
 					}
-					patterns.push({ regex: rRule, handler: expandHandler(handler) });
+					patterns.push({ regex: rRule, handler: expandVerbs(handler) });
 				} else if(rToken.test(rule)) {
-					var pattern = parseToken(rule, expandHandler(handler));
+					var pattern = parseToken(rule, expandVerbs(handler));
 					var cmpPattern = function(p) {
 						return p.regex.toString() === pattern.regex.toString();
 					};
