@@ -18,7 +18,7 @@ var getBuffer = (function() {
 		if(buffers.has(filePath)) { return callback(null, buffers.get(filePath)); }
 
 		fs.stat(filePath, function(err, stats) {
-			if(err && err.code == "ENOENT") {
+			if(err && err.code === "ENOENT") {
 				return callback({ "file-not-found": true, path: filePath }, null);
 			}
 
@@ -211,7 +211,7 @@ function expandVerbs(handler) { // Expands "POST GET": handler to "POST": handle
 		return handler;
 	}
 
-	for(key in handler) {
+	for(var key in handler) {
 		key.split(/\s+/).forEach(function(method) {
 			handler[method] = handler[key];
 		});
