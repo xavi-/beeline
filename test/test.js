@@ -42,7 +42,7 @@ var router = bee.route({
         assert.equal(req.url, "/%E2%88%91%C3%A9%C3%B1/profile");
         assert.equal(tokens, req.params)
         assert.equal(tokens["user"], "∑éñ");
-        assert.equal("%E2%88%91%C3%A9%C3%B1", vals[0]);
+        assert.equal(vals[0], "%E2%88%91%C3%A9%C3%B1");
         tests.finished();
     },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
