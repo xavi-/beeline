@@ -79,10 +79,10 @@ var router = bee.route({
 router({ url: "/test?param=1&woo=2" });
 router({ url: "/throw-error" });
 router({ url: "/names/smith/will" });
-router({ url: "/actors/smith/will" });
+router({ url: "/static/pictures/actors/smith/will.jpg" });
 router({ url: "/da-oozer/static/pictures/venkman.jpg" });
 router({ url: "/%E2%88%91%C3%A9%C3%B1/profile" });
-router({ url: "/static/pictures/actors/smith/will.jpg" });
+router({ url: "/actors/smith/will" });
 router({ url: "/random", triggerGeneric: true });
 router({ url: "/url-not-found" });
 
