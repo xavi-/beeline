@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 64,
+    expected: 68,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -45,21 +45,6 @@ var router = bee.route({
         assert.equal(vals[0], "%E2%88%91%C3%A9%C3%B1");
         tests.finished();
     },
-    "/`game`/`user-id:[a-z]{2}-(\\d{5})`/`post-id:\\d+`/`file...`": function(
-        req, res, tokens, vals
-    ) {
-        assert.equal(req.url, "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg");
-        assert.equal(tokens, req.params)
-        assert.equal(tokens["game"], "space-wars");
-        assert.equal(tokens["user-id"], "ab-12345");
-        assert.equal(tokens["post-id"], "1943");
-        assert.equal(tokens["file"], "pics/friends/will-smith.jpeg");
-        assert.equal(vals[0], "space-wars");
-        assert.equal(vals[1], "ab-12345");
-        assert.equal(vals[2], "1943");
-        assert.equal(vals[3], "pics/friends/will-smith.jpeg");
-        tests.finished();
-    },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
         assert.equal(req.url, "/actors/smith/will");
         assert.equal(req.params, undefined);
@@ -97,7 +82,6 @@ router({ url: "/names/smith/will" });
 router({ url: "/static/pictures/actors/smith/will.jpg" });
 router({ url: "/da-oozer/static/pictures/venkman.jpg" });
 router({ url: "/%E2%88%91%C3%A9%C3%B1/profile" });
-router({ url: "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg" });
 router({ url: "/actors/smith/will" });
 router({ url: "/random", triggerGeneric: true });
 router({ url: "/url-not-found" });
@@ -453,6 +437,60 @@ router4({ url: "/da-oozer/static/pictures/venkman.jpg" }, {}, daNext);
 router4({ url: "/static/pictures/actors/smith/will.jpg" }, {}, daNext);
 router4({ url: "/random", triggerGeneric: true }, {}, daNext);
 router4({ url: "/url-not-found" }, {}, daNext);
+
+// Test regex tokens
+var router5 = bee.route({
+    "/`game`/`user-id:([a-z]{2}-\\d{5})`/`post-id:\\d+`/`file...`": function(
+        req, res, tokens, vals
+    ) {
+        assert.equal(req.url, "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg");
+        assert.equal(tokens, req.params)
+        assert.equal(tokens["game"], "space-wars");
+        assert.equal(tokens["user-id"], "ab-12345");
+        assert.equal(tokens["post-id"], "1943");
+        assert.equal(tokens["file"], "pics/friends/will-smith.jpeg");
+        assert.equal(vals[0], "space-wars");
+        assert.equal(vals[1], "ab-12345");
+        assert.equal(vals[2], "1943");
+        assert.equal(vals[3], "pics/friends/will-smith.jpeg");
+        tests.finished();
+    },
+    "/`foo: foo(?=/bar)`/`rest...`": function(req, res, tokens, vals) {
+        assert.equal(req.url, "/foo/bar");
+        assert.equal(tokens, req.params)
+        assert.equal(tokens["foo"], "foo");
+        assert.equal(tokens["rest"], "bar");
+        assert.equal(vals[0], "foo");
+        assert.equal(vals[1], "bar");
+        tests.finished();
+    },
+    "/`foo: foo(?!/bar)`/`rest...`": function(req, res, tokens, vals) {
+        assert.equal(req.url, "/foo/king");
+        assert.equal(tokens, req.params)
+        assert.equal(tokens["foo"], "foo");
+        assert.equal(tokens["rest"], "king");
+        assert.equal(vals[0], "foo");
+        assert.equal(vals[1], "king");
+        tests.finished();
+    },
+    "/`sum-space:     ((((spacey))))     `/rule          /another-spacey-rule        ": function(
+        req, res, tokens, vals
+    ) {
+        if(req.url === "/another-spacey-rule") { tests.finished(); return; }
+
+        assert.equal(req.url, "/spacey/rule");
+        assert.equal(tokens, req.params)
+        assert.equal(tokens["sum-space"], "spacey");
+        assert.equal(vals[0], "spacey");
+        tests.finished();
+    }
+});
+
+router5({ url: "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg" });
+router5({ url: "/foo/bar" });
+router5({ url: "/foo/king" });
+router5({ url: "/spacey/rule" });
+router5({ url: "/another-spacey-rule" });
 
 process.on("exit", function() {
     assert.equal(tests.executed, tests.expected);
