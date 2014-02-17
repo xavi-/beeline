@@ -152,22 +152,33 @@ The `beeline` library contains the following three methods:
     bee.route({
         // /pics/mofo.png serves ./content/pics/mofo.png
         // /pics/la-ghetto/oh-gee.gif serves ./content/pics/la-ghetto/oh-gee.gif
-        // /pics/woo-fee.tiff serves a 404 since there's no corresponding mimeType specified.
+        // /pics/woo-fee.tiff serves a 404 since there's no corresponding
+        // mimeType specified.
         // This helps prevent accidental exposure.
-        "r`^/pics/(.*)$`":
-            bee.staticDir("./content/pics/", { ".gif": "image/gif", ".png": "image/png",
-                                               ".jpg": "image/jpeg", ".jpeg": "image/jpeg" }),
+        "r`^/pics/(.*)$`": bee.staticDir(
+            "./content/pics/",
+            {
+                ".gif": "image/gif", ".png": "image/png",
+                ".jpg": "image/jpeg", ".jpeg": "image/jpeg"
+            }
+        ),
         // Also works with URLs with tokens
         // /static/help/faq.html serves ./static/help/faq.html
-        // /static/properties.json serves a 404 since there's no corresponding mimeType specified.
-        "/static/`path...`":
-            bee.staticDir("./static/", { ".txt": "text/plain", ".html": "text/html",
-                                         ".css": "text/css", ".xml": "text/xml" }),
+        // /static/properties.json serves a 404 since there's no corresponding
+        // mimeType specified.
+        "/static/`path...`": bee.staticDir(
+            "./static/",
+            {
+                ".txt": "text/plain", ".html": "text/html",
+                ".css": "text/css", ".xml": "text/xml"
+            }
+        ),
         // More complicated path constructs also works
         // /will-smith/img-library/headshots/sexy42.jpg
         //    serves ./user-images/will-smith/headshots/sexy42.jpg
-        "/`user`/img-library/`path...`":
-            bee.staticDir("./user-images/", { ".jpg": "image/jpeg", ".jpeg": "image/jpeg" })
+        "/`user`/img-library/`path...`": bee.staticDir(
+            "./user-images/", { ".jpg": "image/jpeg", ".jpeg": "image/jpeg" }
+        )
     });
     ```
 
