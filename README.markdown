@@ -45,6 +45,15 @@ var router = bee.route({ // Create a new router
         //   and values === [ "da-oozer", "pictures/venkman.jpg" ]
         //   also req.params === tokens
     },
+    "/blogs/`user-id: [a-z]{2}-\\d{5}`/`post-id: \\d+`": function(req, res, tokens, values) {
+        // Called when req.url starts with "/blogs/" and when the second and third
+        // parts match /[a-z]{2}-\d{5}/ and /\d+/ respectiviely.
+        // The parameter tokens is an object that maps token names and value
+        // For example if req.url === "/blog/ab-12345/1783"
+        //   then tokens === { "user-id": "ab-12345", "post-id": "1783" }
+        //   and values === [ "ab-12345", "1783" ]
+        //   also req.params === tokens
+    },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function(req, res, matches) {
         // Called when req.url matches this regex: "^/actors/([\\w]+)/([\\w]+)$"
         // An array of captured groups is passed as the third parameter
