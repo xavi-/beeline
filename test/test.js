@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 68,
+    expected: 70,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -148,7 +148,9 @@ router.add({
     "`404`": function() { },
     "`405`": function() { },
     "`500`": function() { },
-    "`not-a-valid-rule": function() { }
+    "`not-a-valid-rule": function() { },
+    "/`not`/ok`": function() { },
+    "/`not`/`ok-either": function() { }
 });
 
 assert.ok(warnings["Duplicate beeline rule: /home"]);
@@ -158,6 +160,8 @@ assert.ok(warnings["Duplicate beeline rule: `404`"]);
 assert.ok(warnings["Duplicate beeline rule: `405`"]);
 assert.ok(warnings["Duplicate beeline rule: `500`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
+assert.ok(warnings["Invalid beeline rule: /`not`/ok`"]);
+assert.ok(warnings["Invalid beeline rule: /`not`/`ok-either"]);
 
 // Testing explicit 404, 405, and error calls
 var router2 = bee.route({

@@ -263,7 +263,8 @@ function splitRules(key) {
 		ruleIdx = curIdx;
 	}
 
-	if(ruleIdx !== curIdx) { rules.push(key.substring(ruleIdx)); }
+	if(isQuoted) { console.warn("Invalid beeline rule: " + key.substring(ruleIdx)); }
+	else if(ruleIdx !== curIdx) { rules.push(key.substring(ruleIdx)); }
 
 	return rules;
 }
