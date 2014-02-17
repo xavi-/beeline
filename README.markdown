@@ -45,7 +45,9 @@ var router = bee.route({ // Create a new router
         //   and values === [ "da-oozer", "pictures/venkman.jpg" ]
         //   also req.params === tokens
     },
-    "/blogs/`user-id: [a-z]{2}-\\d{5}`/`post-id: \\d+`": function(req, res, tokens, values) {
+    "/blogs/`user-id: [a-z]{2}-\\d{5}`/`post-id: \\d+`": function(
+        req, res, tokens, values
+    ) {
         // Called when req.url starts with "/blogs/" and when the second and third
         // parts match /[a-z]{2}-\d{5}/ and /\d+/ respectiviely.
         // The parameter tokens is an object that maps token names and value
