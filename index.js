@@ -192,6 +192,7 @@ function processEmbeddedRegex(regex) {
 
 	return { regex: "(" + regex + ")", numCaptures: numCaptures + 1 };
 }
+var rHasBackreference = /\\[1-9]/;
 function parseToken(rule, handler) {
 	var tokens = [], captureIdx = 0;
 	var transform = rule.replace(rToken, function replaceToken(_, name, regex, isExtend) {
@@ -203,6 +204,9 @@ function parseToken(rule, handler) {
 			regex = info.regex;
 			tokens.push({ name: name, captureIdx: captureIdx });
 			captureIdx += info.numCaptures;
+			if(rHasBackreference.test(regex)) {
+				console.warn("Backreference are not supported -- url: " + rule);
+			}
 		}
 		return regex || (isExtend ? "(.*?)" : "([^/]*?)");
 	});

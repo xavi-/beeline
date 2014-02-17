@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 70,
+    expected: 71,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -150,7 +150,8 @@ router.add({
     "`500`": function() { },
     "`not-a-valid-rule": function() { },
     "/`not`/ok`": function() { },
-    "/`not`/`ok-either": function() { }
+    "/`not`/`ok-either": function() { },
+    "/`backref: f(.)\\1`": function() { }
 });
 
 assert.ok(warnings["Duplicate beeline rule: /home"]);
@@ -162,6 +163,7 @@ assert.ok(warnings["Duplicate beeline rule: `500`"]);
 assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 assert.ok(warnings["Invalid beeline rule: /`not`/ok`"]);
 assert.ok(warnings["Invalid beeline rule: /`not`/`ok-either"]);
+assert.ok(warnings["Backreference are not supported -- url: /`backref: f(.)\\1`"]);
 
 // Testing explicit 404, 405, and error calls
 var router2 = bee.route({
