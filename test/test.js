@@ -470,13 +470,11 @@ var router5 = bee.route({
         assert.equal(vals[1], "bar");
         tests.finished();
     },
-    "/`foo: foo(?!/bar)`/`rest...`": function(req, res, tokens, vals) {
-        assert.equal(req.url, "/foo/king");
+    "/`foo: foo(?!/bar).*`": function(req, res, tokens, vals) {
+        assert.equal(req.url, "/foo-king");
         assert.equal(tokens, req.params);
-        assert.equal(tokens["foo"], "foo");
-        assert.equal(tokens["rest"], "king");
-        assert.equal(vals[0], "foo");
-        assert.equal(vals[1], "king");
+        assert.equal(tokens["foo"], "foo-king");
+        assert.equal(vals[0], "foo-king");
         tests.finished();
     },
     "/`sum-space:     ((((spacey))))     `/rule          /another-spacey-rule        ": function(
@@ -494,7 +492,7 @@ var router5 = bee.route({
 
 router5({ url: "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg" });
 router5({ url: "/foo/bar" });
-router5({ url: "/foo/king" });
+router5({ url: "/foo-king" });
 router5({ url: "/spacey/rule" });
 router5({ url: "/another-spacey-rule" });
 
