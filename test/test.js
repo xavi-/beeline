@@ -16,7 +16,7 @@ var router = bee.route({
     "/throw-error": function(req, res) { throw Error("500 should catch"); },
     "/names/`last-name`/`first-name`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/names/smith/will");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["first-name"], "will");
         assert.equal(tokens["last-name"], "smith");
         assert.equal(vals[0], "smith");
@@ -31,7 +31,7 @@ var router = bee.route({
     },
     "/`user`/static/`path...`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/da-oozer/static/pictures/venkman.jpg");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["user"], "da-oozer");
         assert.equal(tokens["path"], "pictures/venkman.jpg");
         assert.equal(vals[0], "da-oozer");
@@ -40,7 +40,7 @@ var router = bee.route({
     },
     "/`user`/profile": function(req, res, tokens, vals) { // Ensure tokens are decoded but not vals
         assert.equal(req.url, "/%E2%88%91%C3%A9%C3%B1/profile");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["user"], "∑éñ");
         assert.equal(vals[0], "%E2%88%91%C3%A9%C3%B1");
         tests.finished();
@@ -86,7 +86,7 @@ router({ url: "/actors/smith/will" });
 router({ url: "/random", triggerGeneric: true });
 router({ url: "/url-not-found" });
 
-router.add({ 
+router.add({
     "/ /home r`^/index(.php|.html|.xhtml)?$`": function(req, res) {
         assert.ok(
             req.url === "/" ||
@@ -102,7 +102,7 @@ router({ url: "/index" });
 router({ url: "/index.php" });
 router({ url: "/home" });
 
-router.add({ 
+router.add({
     "/method-test": {
         "GET": function(req, res) { assert.equal(req.method, "GET"); tests.finished(); },
         "POST": function(req, res) { assert.equal(req.method, "POST"); tests.finished(); },
@@ -448,7 +448,7 @@ var router5 = bee.route({
         req, res, tokens, vals
     ) {
         assert.equal(req.url, "/space-wars/ab-12345/1943/pics/friends/will-smith.jpeg");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["game"], "space-wars");
         assert.equal(tokens["user-id"], "ab-12345");
         assert.equal(tokens["post-id"], "1943");
@@ -461,7 +461,7 @@ var router5 = bee.route({
     },
     "/`foo: foo(?=/bar)`/`rest...`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/foo/bar");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["foo"], "foo");
         assert.equal(tokens["rest"], "bar");
         assert.equal(vals[0], "foo");
@@ -470,7 +470,7 @@ var router5 = bee.route({
     },
     "/`foo: foo(?!/bar)`/`rest...`": function(req, res, tokens, vals) {
         assert.equal(req.url, "/foo/king");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["foo"], "foo");
         assert.equal(tokens["rest"], "king");
         assert.equal(vals[0], "foo");
@@ -483,7 +483,7 @@ var router5 = bee.route({
         if(req.url === "/another-spacey-rule") { tests.finished(); return; }
 
         assert.equal(req.url, "/spacey/rule");
-        assert.equal(tokens, req.params)
+        assert.equal(tokens, req.params);
         assert.equal(tokens["sum-space"], "spacey");
         assert.equal(vals[0], "spacey");
         tests.finished();
