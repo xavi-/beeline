@@ -312,6 +312,9 @@ function route(routes) {
 			splitRules(key).forEach(function(rule) {
 				if(rule.indexOf("`") === -1) {
 					if(rule in urls) { console.warn("Duplicate beeline rule: " + rule); }
+					if(rule.charAt(0) !== "/") {
+						console.warn("Url doesn't have leading slash (/): " + rule);
+					}
 					urls[rule] = expandVerbs(handler);
 				} else if(rule === "`404`" || rule === "`missing`" || rule === "`default`") {
 					if(missing !== default404) { console.warn("Duplicate beeline rule: " + rule); }

@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 71,
+    expected: 72,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -143,6 +143,7 @@ router({ url: "/test-preprocess" }, {});
 // Testing warning messages
 router.add({
     "/home": function() { },
+    "no-slash": function() { },
     "r`^/actors/([\\w]+)/([\\w]+)$`": function() { },
     "/`user`/static/`path...`": function() { },
     "`404`": function() { },
@@ -164,6 +165,7 @@ assert.ok(warnings["Invalid beeline rule: `not-a-valid-rule"]);
 assert.ok(warnings["Invalid beeline rule: /`not`/ok`"]);
 assert.ok(warnings["Invalid beeline rule: /`not`/`ok-either"]);
 assert.ok(warnings["Backreference are not supported -- url: /`backref: f(.)\\1`"]);
+assert.ok(warnings["Url doesn't have leading slash (/): no-slash"]);
 
 // Testing explicit 404, 405, and error calls
 var router2 = bee.route({
