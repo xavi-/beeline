@@ -216,7 +216,8 @@ function parseToken(rule, handler) {
 
 
 function executeHandler(handler, thisp, req, res, opts) {
-	handler = (handler[req.method] || handler.any || handler);
+	var override = req.headers && req.headers["x-http-method-override"];
+	handler = (handler[override] || handler[req.method] || handler.any || handler);
 
 	var extra = opts.extra, vals = opts.vals, next = opts.next;
 

@@ -210,6 +210,7 @@ In the event that a request matches two rules, the following precedence rules ar
 - RegExp rules take higher precedence than `404`
 - `404` and `405` have the lowest precedences
 - The `500` rules is outside the precedence rules.  It can potentially be triggered at any time.
+- Amoung request methods, "any" has the lowerest precdence.  Also note that the "x-http-method-override" header is respected.
 
 If the exact same rule is defined twice, then it's unspecified which request handler will be triggered.
 

@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 72,
+    expected: 73,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -110,6 +110,14 @@ router.add({
             assert.ok(req.method !== "GET" || req.method !== "POST"); tests.finished();
         }
     },
+    "/fake-put": {
+        "PUT": function(req, res) {
+            assert.equal(req.method, "GET");
+            assert.equal(req.headers["x-http-method-override"], "PUT");
+            tests.finished();
+        },
+        "any": function(req, res) { throw "I shouldn't have been called...."; }
+    },
     "/`user`/profile/`path...`": {
         "POST PUT": function(req, res, tokens, vals) {
             assert.ok(req.method === "POST" || req.method === "PUT");
@@ -125,6 +133,7 @@ router.add({
 router({ url: "/method-test", method: "GET" });
 router({ url: "/method-test", method: "POST" });
 router({ url: "/method-test", method: "HEAD" });
+router({ url: "/fake-put", headers: { "x-http-method-override": "PUT" }, method: "GET" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "POST" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "PUT" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "GET" });
