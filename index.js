@@ -56,7 +56,9 @@ function sendBuffer(req, res, mimeType, maxAge) {
 			throw err;
 		}
 
-		maxAge = maxAge || 31536000;
+		if(maxAge === undefined){
+			maxAge = 31536000;
+		}
 
 		res.removeHeader("Set-Cookie");
 		res.setHeader("Cache-Control", "private, max-age=" + maxAge);
