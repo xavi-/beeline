@@ -56,7 +56,7 @@ function sendBuffer(req, res, mimeType, maxAge) {
 			throw err;
 		}
 
-		if(maxAge === undefined){
+		if(maxAge == null){
 			maxAge = 31536000;
 		}
 
