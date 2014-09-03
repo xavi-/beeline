@@ -114,7 +114,7 @@ function staticDir(rootDir, mimeLookup, maxAge) {
 }
 
 function default404(req, res, next) {
-	if(next) { return next(); }
+	if(typeof next === 'function') { return next(); }
 
 	var body = "404'd";
 	res.writeHead(404, { "Content-Length": body.length, "Content-Type": "text/plain" });
@@ -123,7 +123,7 @@ function default404(req, res, next) {
 	console.log("Someone 404'd: " + req.url);
 }
 function default405(req, res, next) {
-	if(next) { return next(); }
+	if(typeof next === 'function') { return next(); }
 
 	var body = "405'd";
 	res.writeHead(405, { "Content-Length": body.length, "Content-Type": "text/plain" });
@@ -132,7 +132,7 @@ function default405(req, res, next) {
 	console.log("Someone 405'd -- url: " + req.url + "; verb: " + req.method);
 }
 function default500(req, res, err, next) {
-	if(next) { return next(err); }
+	if(typeof next === 'function') { return next(err); }
 
 	console.error("Error accessing: " + req.method + " " + req.url);
 	console.error(err.message);
