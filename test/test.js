@@ -4,7 +4,7 @@ var crypto = require("crypto");
 var bee = require("../");
 
 var tests = {
-    expected: 73,
+    expected: 74,
     executed: 0,
     finished: function() { tests.executed++; }
 };
@@ -103,7 +103,7 @@ router({ url: "/index.php" });
 router({ url: "/home" });
 
 router.add({
-    "/method-test": {
+    "/method-test/`id`": {
         "GET": function(req, res) { assert.equal(req.method, "GET"); tests.finished(); },
         "POST": function(req, res) { assert.equal(req.method, "POST"); tests.finished(); },
         "any": function(req, res) {
@@ -125,14 +125,15 @@ router.add({
         }
     },
     "`405`": function(req, res) {
+        assert.strictEqual(arguments.length, 2);
         assert.equal(req.method, "GET");
         assert.equal(req.url, "/dozer/profile/timeline/2010/holloween");
         tests.finished();
     }
 });
-router({ url: "/method-test", method: "GET" });
-router({ url: "/method-test", method: "POST" });
-router({ url: "/method-test", method: "HEAD" });
+router({ url: "/method-test/123", method: "GET" });
+router({ url: "/method-test/123", method: "POST" });
+router({ url: "/method-test/123", method: "HEAD" });
 router({ url: "/fake-put", headers: { "x-http-method-override": "PUT" }, method: "GET" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "POST" });
 router({ url: "/dozer/profile/timeline/2010/holloween", method: "PUT" });
@@ -405,6 +406,9 @@ router4.add({
         assert.strictEqual(next, daNext);
         tests.finished();
     },
+    "/test/`id`": {
+        "GET": function() { throw Error("This shouldn't be called"); }
+    },
     "/names/`last-name`/`first-name`": function(req, res, tokens, vals, next) {
         assert.strictEqual(next, daNext);
         tests.finished();
@@ -432,6 +436,11 @@ router4.add({
         assert.strictEqual(next, daNext);
         tests.finished();
     },
+    "`405`": function(req, res, next) {
+        assert.strictEqual(arguments.length, 3);
+        assert.strictEqual(next, daNext);
+        tests.finished();
+    },
     "`500`": function(req, res, err, next) {
         try { assert.equal(req.url, "/throw-error"); }
         catch(e) {
@@ -454,6 +463,7 @@ router4({ url: "/da-oozer/static/pictures/venkman.jpg" }, {}, daNext);
 router4({ url: "/static/pictures/actors/smith/will.jpg" }, {}, daNext);
 router4({ url: "/random", triggerGeneric: true }, {}, daNext);
 router4({ url: "/url-not-found" }, {}, daNext);
+router4({ url: "/test/123", method: "POST" }, {}, daNext);
 
 // Test regex tokens
 var router5 = bee.route({

@@ -299,12 +299,18 @@ function route(routes) {
 			error.call(this, req, res, err, next);
 		}
 	}
+	function missingVerbHandler(req, res) {
+		var next = arguments[arguments.length - 1];
+
+		if(typeof next !== "function") { missingVerb.call(this, req, res); }
+		else { missingVerb.call(this, req, res, next); }
+	}
 	handler.add = function(routes) {
 		for(var key in routes) {
 			var handler = routes[key];
 
 			if(Object.prototype.toString.call(handler) === "[object Object]") {
-				handler.any = handler.any || function() { missingVerb.apply(this, arguments); };
+				handler.any = handler.any || missingVerbHandler;
 			}
 
 			if(key === "`preprocess`") {
