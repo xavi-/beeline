@@ -14,9 +14,7 @@ var getBuffer = (function() {
 		fs.watchFile(filePath, function() { buffers.del(filePath); });
 	}
 
-	return function getBuffer(filePath, callback) {
-		if(buffers.has(filePath)) { return callback(null, buffers.get(filePath)); }
-
+	function getFileInfo(filePath, callback){
 		fs.stat(filePath, function(err, stats) {
 			if(err && err.code === "ENOENT") {
 				return callback({ "file-not-found": true, path: filePath }, null);
@@ -39,11 +37,33 @@ var getBuffer = (function() {
 				callback(null, buffers.get(filePath));
 			});
 		});
+	}
+
+	return function getBuffer(filePath, acceptsGzip, callback) {
+		var gzipFilePath = filePath + '.gz';
+
+		if(buffers.has(gzipFilePath)) { return callback(null, buffers.get(gzipFilePath), 'gzip'); }
+		if(buffers.has(filePath)) { return callback(null, buffers.get(filePath)); }
+
+		if(!acceptsGzip){
+			getFileInfo(filePath, callback);
+			return;
+		}
+
+		fs.exists(gzipFilePath, function(exists){
+			if(exists){
+				getFileInfo(gzipFilePath, function(err, buffer){
+					callback(err, buffer, 'gzip');
+				});
+			} else {
+				getFileInfo(filePath, callback);
+			}
+		});
 	};
 })();
 
 function sendBuffer(req, res, mimeType, maxAge) {
-	return function(err, buffer) {
+	return function(err, buffer, encoding) {
 		if(err) {
 			if(err["file-not-found"]) {
 				console.error("Could not find file: " + err.path);
@@ -62,6 +82,10 @@ function sendBuffer(req, res, mimeType, maxAge) {
 		res.setHeader("Cache-Control", "private, max-age=" + maxAge);
 		res.setHeader("ETag", buffer.sum);
 
+		if(encoding){
+			res.setHeader("Content-Encoding", encoding);
+		}
+
 		if(req.headers["if-none-match"] === buffer.sum) {
 			res.writeHead(304);
 			return res.end();
@@ -77,7 +101,9 @@ function sendBuffer(req, res, mimeType, maxAge) {
 
 var staticFile = (function() {
 	function handler(filePath, mimeType, req, res, maxAge) {
-		getBuffer(filePath, sendBuffer(req, res, mimeType, maxAge));
+		var acceptsGzip = req.headers && req.headers['accept-encoding'] && ~req.headers['accept-encoding'].indexOf('gzip');
+
+		getBuffer(filePath, acceptsGzip, sendBuffer(req, res, mimeType, maxAge));
 	}
 
 	return function staticFile(filePath, mime, maxAge) {
@@ -96,6 +122,7 @@ function staticDir(rootDir, mimeLookup, maxAge) {
 		matches = matches || extra;
 		var filePath = path.join.apply(path, [ rootDir ].concat(matches));
 		var ext = path.extname(filePath).toLowerCase();
+		var acceptsGzip = req.headers && req.headers['accept-encoding'] && ~req.headers['accept-encoding'].indexOf('gzip');
 
 		if(!(ext in mimeLookup)) {
 			console.error("Unknown file extension -- file: " + filePath + "; extension: " + ext);
@@ -109,7 +136,7 @@ function staticDir(rootDir, mimeLookup, maxAge) {
 			return default404(req, res);
 		}
 
-		getBuffer(filePath, sendBuffer(req, res, mimeLookup[ext], maxAge));
+		getBuffer(filePath, acceptsGzip, sendBuffer(req, res, mimeLookup[ext], maxAge));
 	};
 }
 
